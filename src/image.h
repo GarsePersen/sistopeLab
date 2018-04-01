@@ -13,7 +13,7 @@ typedef struct {
     int width;
     int dataPointer;
     int isCompressed;
-    Triad *triad;
+    Triad **triads;
 }Image;
 
 

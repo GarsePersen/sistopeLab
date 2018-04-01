@@ -32,26 +32,46 @@ Image *loadImage(char *file_name){
             int temp;
             
             //Proceso de extracción del puntero de los datos (bit 10)
-            for(x=0; x<8;x++){
-                read(id_open,&temp,1);
-            }
+            read(id_open,&temp,8);
             read(id_open,&(img->dataPointer),4);
             //Proceso de lectura de dimensiones (bit 18)
-            for(x=0; x<4;x++){
-                read(id_open,&temp,1);
-            }
+            read(id_open,&temp,4);
             read(id_open,&img->width,4); //ancho.
             read(id_open,&img->height,4); //alto.
             //Proceso de extracción de variable de compresión (bit 30);
-            for(x=0; x<4;x++){
-                read(id_open,&temp,1);
-            }
+            read(id_open,&temp,4);
             read(id_open,&img->isCompressed,4); //está comprimido?
-            
+
+            if(img->isCompressed != 0){
+                printf("Está comprimido.\n");
+            }else{
+                printf("No está comprimido.\n");
+
+            }
+
             printf("Dp: %i\n",img->dataPointer);
             printf("ancho: %i\n",img->width);
             printf("Largo: %i\n",img->height);
             printf("está comprimido?: %i\n",img->isCompressed);
+
+            //Proceso de extracción de tuplas.
+            //Han pasado 26 ciclos de lectura por lo tanto 
+
+            int i = read(id_open,&temp,(img->dataPointer - 26));
+            printf("i: %i\n",i);
+            int y;
+            img->triads = (Triad**)malloc(sizeof(Triad*)*img->height);
+            for(y = 0; y<(img->height); y++){
+                img->triads[y] = (Triad*)malloc(sizeof(Triad)*img->width);
+            }
+            for(x=0; x<(img->height); x++){
+                for(y = 0; y<(img->width); y++){
+                    read(id_open,&img->triads[x][y].r,1);
+                    printf("r: %i\n",img->triads[x][y].r);
+                    read(id_open,&img->triads[x][y].g,4);
+                    read(id_open,&img->triads[x][y].b,4);
+                }
+            }
 
             return img;
         }
