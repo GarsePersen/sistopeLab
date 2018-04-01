@@ -100,7 +100,7 @@ Image *loadImage(char *file_name){
             printf("pixel[0,F]: (%i,%i,%i)\n",img->triads[0][img->width-1].r,img->triads[0][img->width-1].g,img->triads[0][img->width-1].b);
             printf("pixel[F,F]: (%i,%i,%i)\n",img->triads[img->height-1][img->width-1].r,img->triads[img->height-1][img->width-1].g,img->triads[img->height-1][img->width-1].b);
             
-           int id = 0;
+            int id = 0;
             read(id_open,&id,1);
             printf("r: %i\n",id);
             read(id_open,&id,1);

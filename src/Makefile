@@ -9,5 +9,5 @@ image.o: image.h image.c
 	gcc $(FLAGS) -c image.c -o image.o
 
 clean:
-	rm -f *.o lab.exe lab
+	rm -f *.o *.swp lab.exe lab
 
