@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <unistd.h>
+#include "image.h"
+
 
 int main(int argc, char **argv){
 	
@@ -31,15 +33,21 @@ int main(int argc, char **argv){
 		
 
 	}
-	
+	//Después se activa. xd
 	//Comprobaciones
-	if ((imageNumber == -1) || (thresholdB == -1) || (thresholdC == -1)){
+	/*if ((imageNumber == -1) || (thresholdB == -1) || (thresholdC == -1)){
 		printf("Compruebe que ingreso todas las opciones (ver manual)\n");
 		return -1;
 	}
 
 	printf("cantImagenes: %i \numbralB: %i \numbralC: %i \nbandera: %i\n", imageNumber, thresholdB, thresholdC, flag);
+	*/
 	
+	
+	
+	//Prueba de extracción de imágen.
+	printf("Inicio de prueba de extracción de imágen.");
+	Image *img = loadImage("sky_bmp.bmp");
 
 
 	return 0;
