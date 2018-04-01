@@ -56,8 +56,11 @@ Image *loadImage(char *file_name){
 
             //Proceso de extracción de tuplas.
             //Han pasado 26 ciclos de lectura por lo tanto 
-
-            int i = read(id_open,&temp,(img->dataPointer - 26));
+            int i = 0;
+            for(x=0; x<(img->dataPointer - 26); x++){
+                i = read(id_open,&temp,1);
+            }
+            
             printf("i: %i\n",i);
             int y;
             img->triads = (Triad**)malloc(sizeof(Triad*)*img->height);
@@ -67,9 +70,11 @@ Image *loadImage(char *file_name){
             for(x=0; x<(img->height); x++){
                 for(y = 0; y<(img->width); y++){
                     read(id_open,&img->triads[x][y].r,1);
-                    printf("r: %i\n",img->triads[x][y].r);
-                    read(id_open,&img->triads[x][y].g,4);
-                    read(id_open,&img->triads[x][y].b,4);
+                    //printf("r: %i ",img->triads[x][y].r);
+                    read(id_open,&img->triads[x][y].g,1);
+                    //printf("g: %i ",img->triads[x][y].g);
+                    read(id_open,&img->triads[x][y].b,1);
+                    //printf("b: %i \n",img->triads[x][y].b);
                 }
             }
 
