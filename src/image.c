@@ -21,7 +21,6 @@ Image *loadImage(char *file_name){
         char m;
         read(id_open,&b,sizeof(char));
         read(id_open,&m,sizeof(char));
-
         if(b != 'B' || m != 'M'){
             printf("No es un archivo BMP\n");
             return NULL;
@@ -32,22 +31,27 @@ Image *loadImage(char *file_name){
             int x;
             int temp;
             
-            //Proceso de extracción del puntero de los datos.
+            //Proceso de extracción del puntero de los datos (bit 10)
             for(x=0; x<8;x++){
                 read(id_open,&temp,1);
             }
             read(id_open,&(img->dataPointer),4);
-
-            //Proceso de lectura de dimensiones
+            //Proceso de lectura de dimensiones (bit 18)
             for(x=0; x<4;x++){
                 read(id_open,&temp,1);
             }
             read(id_open,&img->width,4); //ancho.
             read(id_open,&img->height,4); //alto.
+            //Proceso de extracción de variable de compresión (bit 30);
+            for(x=0; x<4;x++){
+                read(id_open,&temp,1);
+            }
+            read(id_open,&img->isCompressed,4); //está comprimido?
             
             printf("Dp: %i\n",img->dataPointer);
             printf("ancho: %i\n",img->width);
             printf("Largo: %i\n",img->height);
+            printf("está comprimido?: %i\n",img->isCompressed);
 
             return img;
         }
