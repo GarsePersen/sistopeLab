@@ -1,6 +1,5 @@
 
 
-
 typedef struct{
     int r;
     int g;
@@ -8,10 +7,16 @@ typedef struct{
 }Triad;
 
 typedef struct {
-
-    int height;
-    int width;
+    int type;
+    int fileSize;
+    int reserved1;
+    int reserved2;
     int dataPointer;
+    int headerSize;
+    int width;
+    int height;
+    int planes;
+    int bitPerPixel;
     int isCompressed;
     Triad **triads;
 }Image;
