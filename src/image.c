@@ -20,8 +20,8 @@ Image *loadImage(char *file_name){
         char b;
         char m;
         int count = 0;
-        read(id_open,&b,sizeof(char));
-        read(id_open,&m,sizeof(char));
+        read(id_open,&b,1);
+        read(id_open,&m,1);
         count += 2;
         if(b != 'B' || m != 'M'){
             printf("No es un archivo BMP\n");
@@ -65,15 +65,11 @@ Image *loadImage(char *file_name){
 
             //Proceso de extracción de tuplas.
             //Han pasado 26 ciclos de lectura por lo tanto 
-            int i = 0;
-            printf("dp - 26: %i\n",img->dataPointer - 26);
-            printf("count: %i\n",count);
-            for(x=0; x<(img->dataPointer - count); x++){
-                i = read(id_open,&temp,1);
+            for(x=count; x<(img->dataPointer); x++){
+                read(id_open,&temp,1);
             }
 
             
-            printf("i: %i\n",i);
             int y;
             //Denuevo
             img->triads = (Triad**)malloc(sizeof(Triad*)*img->height);        
@@ -82,19 +78,26 @@ Image *loadImage(char *file_name){
             }
             
             for(x= img->height - 1; x>=0; x--){
+                int aux = 0;
                 for(y = 0; y<img->width; y++){
                     read(id_open,&img->triads[x][y].r,1);
-                    //printf("r: %i ",img->triads[x][y].r);
                     read(id_open,&img->triads[x][y].g,1);
-                    //printf("g: %i ",img->triads[x][y].g);
                     read(id_open,&img->triads[x][y].b,1);
-                    //printf("b: %i \n",img->triads[x][y].b);
+                    aux+=3;
                     if(img->width -1 == y){
-                        read(id_open,&temp,4);
+                        //read(id_open,&temp,((aux+3)&~0x03));
 
                     }
                 }
             }
+            for(x= 0; x<img->height; x++){
+                for(y = 0; y<img->width; y++){
+                    printf("|%c ",img->triads[x][y].r);
+                    printf("%c ",img->triads[x][y].g);
+                    printf("%c|",img->triads[x][y].b);
+                }
+                printf("\n");
+            }/*
             printf("pixel[0,0]: (%i,%i,%i)\n",img->triads[0][0].r,img->triads[0][0].g,img->triads[0][0].b);
             printf("pixel[F,0]: (%i,%i,%i)\n",img->triads[img->height-1][0].r,img->triads[img->height-1][0].g,img->triads[img->height-1][0].b);
             printf("pixel[0,F]: (%i,%i,%i)\n",img->triads[0][img->width-1].r,img->triads[0][img->width-1].g,img->triads[0][img->width-1].b);
@@ -107,7 +110,7 @@ Image *loadImage(char *file_name){
             printf("g: %i\n",id);
             read(id_open,&id,1);
             printf("b: %i\n",id);
-
+*/
             return img;
         }
     }

@@ -47,7 +47,7 @@ int main(int argc, char **argv){
 	
 	//Prueba de extracción de imágen.
 	printf("Inicio de prueba de extracción de imágen.");
-	Image *img = loadImage("sky_bmp.bmp");
+	Image *img = loadImage("hola.bmp");
 
 
 	return 0;
