@@ -46,7 +46,7 @@ int main(int argc, char **argv){
 	
 	
 	//Prueba de extracción de imágen.
-	Image *img = loadImage("imagenPrueba24.bmp");
+	Image *img = loadImage("rombo.bmp");
 
 
 	return 0;
