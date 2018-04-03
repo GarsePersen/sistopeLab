@@ -59,14 +59,45 @@ Image *loadImage(char *file_name){
 	printf("tam_tabla_col: %d \n",tablaCol);
 	//Se obtiene la imágen.
 	fseek(fptr,img->dataPointer,SEEK_SET); //Se avanza tantos como el data pointer desde el inicio.
-	int x;
-	int y;
-	int var = 0;
+	//Se extrae la data de la imagen.
 	unsigned char *data = (unsigned char*)malloc(sizeof(char)*tam_img);
 	fread(data,tam_img,1,fptr);
-
-	for (x=0;x<tam_img;x+=3){
-		printf("(%d,%d,%d)\n",data[x],data[x+1],data[x+2]);
+	//Se asigna memoria para la matriz
+	int x;
+	int y;
+	img->triads = (Triad**)malloc(sizeof(Triad*)*img->height);
+	for(x = 0; x<img->width; x++){
+		img->triads[x] = (Triad*)malloc(sizeof(Triad)*img->width);
+	}
+	int count_matrix = 0;
+	//Se calcula el salto para el padding.
+	int padding = -(img->width*3%4 -4) ;
+	//Se inicia la extracción de datos
+	for(x=img->height-1; x>=0; x--){
+		for(y=0; y<img->width;y++){
+			img->triads[x][y].b = data[count_matrix];//r
+			count_matrix++;
+			img->triads[x][y].g = data[count_matrix];//r
+			count_matrix++;
+			img->triads[x][y].r = data[count_matrix];//r
+			count_matrix++;
+			//Si se llega al final de la fila, se saltan tantos bytes como el padding diga.
+			if(y == img->width -1){
+				printf("padding %d\n",padding);
+				count_matrix+=padding;
+			}
+		}
+	}
+	//(OTRA FUNCIÓN)
+	//Impresión de la matriz.
+	for(x = 0; x<img->height;x++){
+		for(y = 0; y<img->width;y++){
+			
+			printf("(%d %d %d)",img->triads[x][y].b,img->triads[x][y].g,img->triads[x][y].r);
+			
+			
+		}
+		printf("\n");
 	}
 	
 	fclose(fptr);
