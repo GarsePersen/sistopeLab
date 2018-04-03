@@ -6,63 +6,82 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-
-Image *loadImage(char *file_name){
+Image *imageHandler(char *file_name){
   	Image *img = (Image*)malloc(sizeof(Image));
-	FILE *fptr;
-	fptr = fopen(file_name, "r");
+    
+    //Se abre imagen
+    FILE * file_pointer = openImage(file_name);
+    //Se lee la data
+    readImage(img, file_pointer);
+    //Se cierra la imagen
+    closeImage(file_pointer);
+    //Se imprime la matriz
+    printPixelMatrix(img);
+     
+
+    return img;
+}
+
+
+FILE *openImage(char *file_name){
+	FILE *file_pointer = fopen(file_name, "r");
+    return file_pointer;
 	
-	fread(&img->type, 2, 1, fptr); //1
+
+}
+
+void closeImage(FILE *file_pointer){
+	fclose(file_pointer);
+}
+
+void readImage(Image *img, FILE *file_pointer){
+	fread(&img->type, 2, 1, file_pointer); //1
 	printf("Tipo: %c\n", img->type);
 
-	fread(&img->fileSize, 4, 1, fptr);//5
+	fread(&img->fileSize, 4, 1, file_pointer);//5
 	printf("File size: %d\n", img->fileSize);
 	
-	fread(&img->reserved1, 2, 1, fptr);//7
+	fread(&img->reserved1, 2, 1, file_pointer);//7
 	printf("Reserved1: %d\n", img->reserved1);
 
-	fread(&img->reserved2, 2, 1, fptr);//9
+	fread(&img->reserved2, 2, 1, file_pointer);//9
 	printf("Reserved2: %d\n", img->reserved2);
 	
 	//Puntero a datos
-	fread(&img->dataPointer, 4, 1, fptr);//13
+	fread(&img->dataPointer, 4, 1, file_pointer);//13
 	printf("DP: %d\n", img->dataPointer);	//
 
 
-	//printf("Header size: %d\n", img->headerSize);
 
-	fseek(fptr,4,SEEK_CUR); //4 desplazamientos
-	fread(&img->width, 4, 1, fptr);//18 ->ancho
-	fread(&img->height, 4, 1, fptr);//21 ->Largo
+	fseek(file_pointer,4,SEEK_CUR); //4 desplazamientos
+	fread(&img->width, 4, 1, file_pointer);//18 ->ancho
+	fread(&img->height, 4, 1, file_pointer);//21 ->Largo
 
 
 	
-	printf("Image size = %d x %d\n", img->width, img->height);
-	fseek(fptr,26,SEEK_SET);
-	fread(&img->planes, 2, 1, fptr);//Planos
-	printf("Number of colour planes is %d\n", img->planes);
+	fseek(file_pointer,26,SEEK_SET);
+	fread(&img->planes, 2, 1, file_pointer);//Planos
 
-	fseek(fptr,28,SEEK_SET);
-	fread(&img->bitPerPixel, 2, 1, fptr);//bits x pixel
-	printf("Bits per pixel is %d\n", img->bitPerPixel);
+	fseek(file_pointer,28,SEEK_SET);    
+	fread(&img->bitPerPixel, 2, 1, file_pointer);//bits x pixel
 	int tam_img = 0;
-	fseek(fptr,34,SEEK_SET);
-	fread(&tam_img,4,1,fptr);
-	printf("tamaño de la imagen: %d\n",tam_img);
+	fseek(file_pointer,34,SEEK_SET);
+	fread(&tam_img,4,1,file_pointer);
 
-	fseek(fptr,30,SEEK_SET);
-	fread(&img->isCompressed,4,1,fptr);
-	printf("Compression type is %d\n", img->isCompressed);
+	fseek(file_pointer,30,SEEK_SET);
+	fread(&img->isCompressed,4,1,file_pointer);
 	int tablaCol;
-	fseek(fptr,46,SEEK_SET);
-	fread(&tablaCol,4,1,fptr);
-	printf("tam_tabla_col: %d \n",tablaCol);
-	//Se obtiene la imágen.
-	fseek(fptr,img->dataPointer,SEEK_SET); //Se avanza tantos como el data pointer desde el inicio.
-	//Se extrae la data de la imagen.
+	fseek(file_pointer,46,SEEK_SET);
+	fread(&tablaCol,4,1,file_pointer);
+	
+    //Se obtiene la imágen.
+	fseek(file_pointer,img->dataPointer,SEEK_SET); //Se avanza tantos como el data pointer desde el inicio.
+	
+    //Se extrae la data de la imagen.
 	unsigned char *data = (unsigned char*)malloc(sizeof(char)*tam_img);
-	fread(data,tam_img,1,fptr);
-	//Se asigna memoria para la matriz
+	fread(data,tam_img,1,file_pointer);
+    
+    //Se asigna memoria para la matriz
 	int x;
 	int y;
 	img->triads = (Triad**)malloc(sizeof(Triad*)*img->height);
@@ -88,18 +107,25 @@ Image *loadImage(char *file_name){
 			}
 		}
 	}
-	//(OTRA FUNCIÓN)
-	//Impresión de la matriz.
-	for(x = 0; x<img->height;x++){
-		for(y = 0; y<img->width;y++){
+
+
+    //Print's
+	/*printf("Image size = %d x %d\n", img->width, img->height);
+	printf("Number of colour planes is %d\n", img->planes);
+	printf("Bits per pixel is %d\n", img->bitPerPixel);
+	printf("tamaño de la imagen: %d\n",tam_img);
+	printf("Compression type is %d\n", img->isCompressed);
+	printf("tam_tabla_col: %d \n",tablaCol);*/
+
+}
+
+void printPixelMatrix(Image *img){
+	for(int x = 0; x<img->height;x++){
+		for(int y = 0; y<img->width;y++){
 			printf("(%d %d %d)",img->triads[x][y].b,img->triads[x][y].g,img->triads[x][y].r);
 		}
 		printf("\n");
 	}
-	
-	fclose(fptr);
-
-	return img;
 }
 
 void convertToGrayScale(Image *img){
@@ -114,12 +140,6 @@ void convertToGrayScale(Image *img){
 		}
 	}
 
-	for(x = 0; x<img->height;x++){
-		for(y = 0; y<img->width;y++){
-			printf("(%d %d %d)",img->triads[x][y].b,img->triads[x][y].g,img->triads[x][y].r);
-		}
-		printf("\n");
-	}
 }
 
 void Binarization(Image *img, int umbral){

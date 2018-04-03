@@ -1,4 +1,4 @@
-
+#include <stdio.h>
 
 typedef struct{
     int r;
@@ -22,4 +22,10 @@ typedef struct {
 }Image;
 
 
-Image *loadImage(char *file_name);
+Image *imageHandler(char *file_name);
+FILE *openImage(char *file_name);
+void readImage(Image *img, FILE *file_pointer);
+void printPixelMatrix(Image *img);
+void convertToGrayScale(Image *img);
+void Binarization(Image *img, int umbral);
+void closeImage(FILE *file_pointer);
