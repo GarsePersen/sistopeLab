@@ -47,6 +47,8 @@ int main(int argc, char **argv){
 	
 	//Prueba de extracción de imágen.
 	Image *img = loadImage("rombo.bmp");
+	printf("\n=========== GrayScale ===========\n");
+	convertToGrayScale(img);
 
 
 	return 0;

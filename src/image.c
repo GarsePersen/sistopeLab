@@ -92,10 +92,7 @@ Image *loadImage(char *file_name){
 	//Impresión de la matriz.
 	for(x = 0; x<img->height;x++){
 		for(y = 0; y<img->width;y++){
-			
 			printf("(%d %d %d)",img->triads[x][y].b,img->triads[x][y].g,img->triads[x][y].r);
-			
-			
 		}
 		printf("\n");
 	}
@@ -103,6 +100,43 @@ Image *loadImage(char *file_name){
 	fclose(fptr);
 
 	return img;
+}
+
+void convertToGrayScale(Image *img){
+	int x;
+	int y;
+
+	for(x =0 ; x<img->height; x++){
+		for(y = 0; y<img->width; y++){
+			img->triads[x][y].b = img->triads[x][y].b*0.11;
+			img->triads[x][y].g = img->triads[x][y].g*0.59;
+			img->triads[x][y].r = img->triads[x][y].r*0.3;
+		}
+	}
+
+	for(x = 0; x<img->height;x++){
+		for(y = 0; y<img->width;y++){
+			printf("(%d %d %d)",img->triads[x][y].b,img->triads[x][y].g,img->triads[x][y].r);
+		}
+		printf("\n");
+	}
+}
+
+void Binarization(Image *img, int umbral){
+	//Se pasa a escala de grises
+	convertToGrayScale(img);
+	int x;
+	int y;
+	int **result = (int**)malloc(sizeof(int)*img->height);
+	for(x =0 ; x<img->height; x++){
+		result[x] = (int*)malloc(sizeof(int)*img->width);
+		for(y = 0; y<img->width; y++){
+			if((img->triads[x][y].r + img->triads[x][y].g + img->triads[x][y].b) > umbral ){
+					
+				//Copiar la imágen y binarizarla.
+			}
+		}
+	}
 }
     
 
