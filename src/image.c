@@ -10,21 +10,64 @@ Image *imageHandler(char *file_name){
   	Image *img = (Image*)malloc(sizeof(Image));
     
     //Se abre imagen
-    FILE * file_pointer = openImage(file_name);
+    FILE *file_pointer = openImage(file_name);
     //Se lee la data
     readImage(img, file_pointer);
+    
+    convertToGrayScale(img);
+
+    writeGrayImage(img, file_pointer);
+    
+     
     //Se cierra la imagen
     closeImage(file_pointer);
-    //Se imprime la matriz
-    printPixelMatrix(img);
-     
 
     return img;
 }
 
+void writeGrayImage(Image *img, FILE *file_pointer){
+	
+    //Se crea estructura para los datos.
+	
+    
+    int count_matrix = 0;
+	//Se calcula el salto para el padding.
+	int padding = -(img->width*3%4 -4) ;
+	unsigned char *data = (unsigned char*)malloc(sizeof(unsigned char)*img->tam_img);
+	for(int x=img->height-1; x>=0; x--){
+		for(int y=0; y<img->width;y++){
+			data[count_matrix] = img->triads[x][y].b;//r
+			count_matrix++;
+			data[count_matrix] = img->triads[x][y].g;//r
+			count_matrix++;
+			data[count_matrix] = img->triads[x][y].r;//r
+			count_matrix++;
+			//Si se llega al final de la fila, se saltan tantos bytes como el padding diga.
+			if(y == img->width -1){
+			   int i = padding;
+               while (i>0){
+                    count_matrix++;
+                    data[count_matrix] = 0;
+                    i--;
+               }
+            }
+		}
+	}
+    
+	//Se resetea el puntero al archivo
+	fseek(file_pointer,0,SEEK_SET);
+    //Se busca el puntero a la data de pixeles
+	fseek(file_pointer,img->dataPointer,SEEK_SET);
+    for(int x=0; x<count_matrix; x++){
+        fwrite(&data[x], sizeof(unsigned char), 1, file_pointer);
+    }
+    
+
+    printf("\nSe crea imagen en escalas grises\n");
+}
 
 FILE *openImage(char *file_name){
-	FILE *file_pointer = fopen(file_name, "r");
+	FILE *file_pointer = fopen(file_name, "r+");
     return file_pointer;
 	
 
@@ -67,7 +110,7 @@ void readImage(Image *img, FILE *file_pointer){
 	int tam_img = 0;
 	fseek(file_pointer,34,SEEK_SET);
 	fread(&tam_img,4,1,file_pointer);
-
+    img->tam_img = tam_img;
 	fseek(file_pointer,30,SEEK_SET);
 	fread(&img->isCompressed,4,1,file_pointer);
 	int tablaCol;
@@ -102,7 +145,6 @@ void readImage(Image *img, FILE *file_pointer){
 			count_matrix++;
 			//Si se llega al final de la fila, se saltan tantos bytes como el padding diga.
 			if(y == img->width -1){
-				printf("padding %d\n",padding);
 				count_matrix+=padding;
 			}
 		}
@@ -134,11 +176,12 @@ void convertToGrayScale(Image *img){
 
 	for(x =0 ; x<img->height; x++){
 		for(y = 0; y<img->width; y++){
-			img->triads[x][y].b = img->triads[x][y].b*0.11;
-			img->triads[x][y].g = img->triads[x][y].g*0.59;
-			img->triads[x][y].r = img->triads[x][y].r*0.3;
+			img->triads[x][y].b = img->triads[x][y].b*0.11+img->triads[x][y].g*0.59+img->triads[x][y].r*0.3;
+			img->triads[x][y].g = img->triads[x][y].b*0.11+img->triads[x][y].g*0.59+img->triads[x][y].r*0.3;
+			img->triads[x][y].r = img->triads[x][y].b*0.11+img->triads[x][y].g*0.59+img->triads[x][y].r*0.3;
 		}
 	}
+
 
 }
 

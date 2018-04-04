@@ -46,7 +46,7 @@ int main(int argc, char **argv){
 	
 	
 	//Prueba de extracción de imágen.
-	imageHandler("rombo.bmp");
+	imageHandler("prueba1.bmp");
 	printf("\n=========== GrayScale ===========\n");
 
 

@@ -16,6 +16,7 @@ typedef struct {
     int width;
     int height;
     int planes;
+    int tam_img;
     int bitPerPixel;
     int isCompressed;
     Triad **triads;
@@ -29,3 +30,4 @@ void printPixelMatrix(Image *img);
 void convertToGrayScale(Image *img);
 void Binarization(Image *img, int umbral);
 void closeImage(FILE *file_pointer);
+void writeGrayImage(Image *img, FILE *file_pointer);
