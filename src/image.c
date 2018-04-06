@@ -1,4 +1,5 @@
 #include "image.h"
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -6,23 +7,49 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-Image *imageHandler(char *file_name){
+
+Image *imageHandler(char *file_name, int umbral){
   	Image *img = (Image*)malloc(sizeof(Image));
+
     
+    //Se asigna un nombre al archivo de salida.
+    char *fileNameOut = (char*)malloc(sizeof(char)*100);
+    //Se guarda el archivo original
+    strcpy(fileNameOut,"(original)");
+    //Se asigna un identificador al archivo
+    strcat(fileNameOut,file_name);
+    //Se copia el archivo
+    cpy_img(file_name,fileNameOut);
     //Se abre imagen
     FILE *file_pointer = openImage(file_name);
     //Se lee la data
     readImage(img, file_pointer);
-    
+    //Se convierte a escala de grises
     convertToGrayScale(img);
 
+    //Se binariza la imágen
+    binarization(img,umbral);
+    //Finalmente se escribe la imágen resultante.
     writeGrayImage(img, file_pointer);
     
-     
     //Se cierra la imagen
     closeImage(file_pointer);
 
     return img;
+}
+
+void cpy_img(char *nameFile, char *nameFileOut){
+    printf("Copia de archivos\n");
+    int data1 =0;
+    
+    FILE *fileIn = fopen(nameFile,"r");
+    FILE *file2 = fopen ( nameFileOut , "w" );
+    
+    while ( (data1 = fgetc ( fileIn )) != EOF ) {
+        fputc ( data1, file2 );
+    }
+    fclose(fileIn);
+    
 }
 
 void writeGrayImage(Image *img, FILE *file_pointer){
@@ -185,19 +212,23 @@ void convertToGrayScale(Image *img){
 
 }
 
-void Binarization(Image *img, int umbral){
-	//Se pasa a escala de grises
-	convertToGrayScale(img);
+void binarization(Image *img, int umbral){
+	
 	int x;
 	int y;
 	int **result = (int**)malloc(sizeof(int)*img->height);
 	for(x =0 ; x<img->height; x++){
 		result[x] = (int*)malloc(sizeof(int)*img->width);
 		for(y = 0; y<img->width; y++){
-			if((img->triads[x][y].r + img->triads[x][y].g + img->triads[x][y].b) > umbral ){
-					
-				//Copiar la imágen y binarizarla.
-			}
+			if((img->triads[x][y].r*100)/255 > umbral ){
+                img->triads[x][y].r = 255;
+                img->triads[x][y].g = 255;
+                img->triads[x][y].b = 255;
+			}else{
+                img->triads[x][y].r = 0;
+                img->triads[x][y].g = 0;
+                img->triads[x][y].b = 0;
+            }
 		}
 	}
 }

@@ -23,11 +23,12 @@ typedef struct {
 }Image;
 
 
-Image *imageHandler(char *file_name);
+Image *imageHandler(char *file_name, int umbral);
 FILE *openImage(char *file_name);
 void readImage(Image *img, FILE *file_pointer);
 void printPixelMatrix(Image *img);
 void convertToGrayScale(Image *img);
-void Binarization(Image *img, int umbral);
 void closeImage(FILE *file_pointer);
 void writeGrayImage(Image *img, FILE *file_pointer);
+void cpy_img(char *nameFile, char *nameFileOut);
+void binarization(Image *img, int umbral);
