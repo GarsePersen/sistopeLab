@@ -15,7 +15,7 @@ Image *imageHandler(char *file_name, int umbral){
     //Se asigna un nombre al archivo de salida.
     char *fileNameOut = (char*)malloc(sizeof(char)*100);
     //Se guarda el archivo original
-    strcpy(fileNameOut,"(original)");
+    strcpy(fileNameOut,"original-");
     //Se asigna un identificador al archivo
     strcat(fileNameOut,file_name);
     //Se copia el archivo
@@ -25,12 +25,13 @@ Image *imageHandler(char *file_name, int umbral){
     //Se lee la data
     readImage(img, file_pointer);
     //Se convierte a escala de grises
+    
     convertToGrayScale(img);
-
-    //Se binariza la imágen
-    binarization(img,umbral);
+	
+    //binarization(img);
     //Finalmente se escribe la imágen resultante.
     writeGrayImage(img, file_pointer);
+	printf("\nb\n");
     
     //Se cierra la imagen
     closeImage(file_pointer);
@@ -54,13 +55,14 @@ void cpy_img(char *nameFile, char *nameFileOut){
 
 void writeGrayImage(Image *img, FILE *file_pointer){
 	
-    //Se crea estructura para los datos.
-	
-    
-    int count_matrix = 0;
+	//Se crea estructura para los datos.
+
+
+	int count_matrix = 0;
 	//Se calcula el salto para el padding.
 	int padding = -(img->width*3%4 -4) ;
-	unsigned char *data = (unsigned char*)malloc(sizeof(unsigned char)*img->tam_img);
+	unsigned char *data = (unsigned char*)malloc(sizeof(unsigned char)*(img->tam_img+img->width*padding));
+	printf("\nCM: %i\n", padding);
 	for(int x=img->height-1; x>=0; x--){
 		for(int y=0; y<img->width;y++){
 			data[count_matrix] = img->triads[x][y].b;//r
@@ -69,28 +71,30 @@ void writeGrayImage(Image *img, FILE *file_pointer){
 			count_matrix++;
 			data[count_matrix] = img->triads[x][y].r;//r
 			count_matrix++;
+			data[count_matrix] = img->triads[x][y].a;//r
+			count_matrix++;
 			//Si se llega al final de la fila, se saltan tantos bytes como el padding diga.
 			if(y == img->width -1){
-			   int i = padding;
-               while (i>0){
-                    count_matrix++;
-                    data[count_matrix] = 0;
-                    i--;
-               }
-            }
+				int i = padding;
+				while (i>0){
+					count_matrix++;
+					data[count_matrix] = 0;
+					i--;
+				}
+			}
 		}
 	}
-    
+
 	//Se resetea el puntero al archivo
 	fseek(file_pointer,0,SEEK_SET);
-    //Se busca el puntero a la data de pixeles
+	//Se busca el puntero a la data de pixeles
 	fseek(file_pointer,img->dataPointer,SEEK_SET);
-    for(int x=0; x<count_matrix; x++){
-        fwrite(&data[x], sizeof(unsigned char), 1, file_pointer);
-    }
-    
+	for(int x=0; x<count_matrix; x++){
+		fwrite(&data[x], sizeof(unsigned char), 1, file_pointer);
+	}
 
-    printf("\nSe crea imagen en escalas grises\n");
+
+	printf("\nSe crea imagen en escalas grises\n");
 }
 
 FILE *openImage(char *file_name){
@@ -169,6 +173,8 @@ void readImage(Image *img, FILE *file_pointer){
 			img->triads[x][y].g = data[count_matrix];//r
 			count_matrix++;
 			img->triads[x][y].r = data[count_matrix];//r
+			count_matrix++;
+			img->triads[x][y].a = data[count_matrix];//r
 			count_matrix++;
 			//Si se llega al final de la fila, se saltan tantos bytes como el padding diga.
 			if(y == img->width -1){

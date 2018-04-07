@@ -46,7 +46,7 @@ int main(int argc, char **argv){
 	
 	
 	//Prueba de extracción de imágen.
-	imageHandler("salida.bmp", 70);
+	imageHandler("prueba2.bmp", 70);
 	printf("\n=========== GrayScale ===========\n");
 
 	//Copia archivos

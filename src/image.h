@@ -4,6 +4,7 @@ typedef struct{
     int r;
     int g;
     int b;
+    int a;
 }Triad;
 
 typedef struct {
