@@ -2,11 +2,31 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <string.h>
 #include "image.h"
 
 
 int main(int argc, char **argv){
 	
+
+
+
+	int op = 0;
+	printf("Ingrese el número de imágenes: \n");
+	int numImgs = 0;
+	scanf("%d",&numImgs);
+	char **imageNames = (char**)malloc(sizeof(char*)*numImgs);
+	int x;
+	for(x = 0; x<numImgs; x++){
+		imageNames[x] = (char*)malloc(sizeof(char)*100);
+		printf("Ingrese el nombre de la imágen %d sin su extensión y luego presione Enter...\n",x);
+		scanf("%s",imageNames[x]);
+		strcat(imageNames[x],".bmp");
+		fflush( stdin );
+		printf("Imagen: %s\n",imageNames[x]);
+	}
+
+
 	int imageNumber = -1;
 	int thresholdB = -1;
 	int thresholdC = -1;
@@ -46,6 +66,10 @@ int main(int argc, char **argv){
 	
 	
 	//Prueba de extracción de imágen.
+	for(x = 0; x<numImgs; x++){
+		imageHandler(imageNames[x],70);
+	}
+	
 	imageHandler("2.bmp", 70);
 	printf("\n=========== GrayScale ===========\n");
 
