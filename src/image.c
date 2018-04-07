@@ -28,7 +28,7 @@ Image *imageHandler(char *file_name, int umbral){
     
     convertToGrayScale(img);
 	
-    //binarization(img);
+    binarization(img,umbral);
     //Finalmente se escribe la imágen resultante.
     writeGrayImage(img, file_pointer);
 	printf("\nb\n");
@@ -60,7 +60,7 @@ void writeGrayImage(Image *img, FILE *file_pointer){
 
 	int count_matrix = 0;
 	//Se calcula el salto para el padding.
-	int padding = -(img->width*3%4 -4) ;
+	int padding = 0;
 	unsigned char *data = (unsigned char*)malloc(sizeof(unsigned char)*(img->tam_img+img->width*padding));
 	printf("\nCM: %i\n", padding);
 	for(int x=img->height-1; x>=0; x--){
@@ -141,6 +141,7 @@ void readImage(Image *img, FILE *file_pointer){
 	int tam_img = 0;
 	fseek(file_pointer,34,SEEK_SET);
 	fread(&tam_img,4,1,file_pointer);
+	printf("Img_size: %d\n",tam_img);
     img->tam_img = tam_img;
 	fseek(file_pointer,30,SEEK_SET);
 	fread(&img->isCompressed,4,1,file_pointer);
@@ -164,7 +165,7 @@ void readImage(Image *img, FILE *file_pointer){
 	}
 	int count_matrix = 0;
 	//Se calcula el salto para el padding.
-	int padding = -(img->width*3%4 -4) ;
+	int padding = -(img->width*4%8 -4) ;
 	//Se inicia la extracción de datos
 	for(x=img->height-1; x>=0; x--){
 		for(y=0; y<img->width;y++){
@@ -177,7 +178,7 @@ void readImage(Image *img, FILE *file_pointer){
 			img->triads[x][y].a = data[count_matrix];//r
 			count_matrix++;
 			//Si se llega al final de la fila, se saltan tantos bytes como el padding diga.
-			if(y == img->width -1){
+			if(y == img->width ){
 				count_matrix+=padding;
 			}
 		}
