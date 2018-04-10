@@ -227,8 +227,8 @@ int* binarization(Image *img, int umbral){
 	int black;
 	int total;
 	int *result =(int*)malloc(sizeof(int)*2);
-
-	int **resultBin = (int**)malloc(sizeof(int)*img->height);
+	printf("Umbral: %d\n", umbral);
+	int **resultBin = (int**)malloc(sizeof(int*)*img->height);
 	for(x =0 ; x<img->height; x++){
 		resultBin[x] = (int*)malloc(sizeof(int)*img->width);
 		for(y = 0; y<img->width; y++){
@@ -236,13 +236,13 @@ int* binarization(Image *img, int umbral){
                 img->triads[x][y].r = 255;
                 img->triads[x][y].g = 255;
                 img->triads[x][y].b = 255;
-                img->triads[x][y].a = 255;
+                //img->triads[x][y].a = 255;
 			}else{
 				black++;
                 img->triads[x][y].r = 0;
                 img->triads[x][y].g = 0;
                 img->triads[x][y].b = 0;
-                img->triads[x][y].a = 255;
+                //img->triads[x][y].a = 255;
             }
             total ++;
 		}
