@@ -7,8 +7,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-
-Image *imageHandler(char *file_name, int umbral){
+int imageHandler(char *file_name, int umbral, int umbralNearlyBlack){
   	Image *img = (Image*)malloc(sizeof(Image));
 
     
@@ -28,7 +27,9 @@ Image *imageHandler(char *file_name, int umbral){
     
     convertToGrayScale(img);
 	
-    binarization(img,umbral);
+    int *result = binarization(img,umbral);
+
+    int resultNearlyBlack  = calculateNearlyBlack(result,umbralNearlyBlack);
     //Finalmente se escribe la imágen resultante.
     writeGrayImage(img, file_pointer);
 	printf("\nb\n");
@@ -36,7 +37,7 @@ Image *imageHandler(char *file_name, int umbral){
     //Se cierra la imagen
     closeImage(file_pointer);
 
-    return img;
+    return resultNearlyBlack;
 }
 
 void cpy_img(char *nameFile, char *nameFileOut){
@@ -219,24 +220,47 @@ void convertToGrayScale(Image *img){
 
 }
 
-void binarization(Image *img, int umbral){
+int* binarization(Image *img, int umbral){
 	
 	int x;
 	int y;
-	int **result = (int**)malloc(sizeof(int)*img->height);
+	int black;
+	int total;
+	int *result =(int*)malloc(sizeof(int)*2);
+
+	int **resultBin = (int**)malloc(sizeof(int)*img->height);
 	for(x =0 ; x<img->height; x++){
-		result[x] = (int*)malloc(sizeof(int)*img->width);
+		resultBin[x] = (int*)malloc(sizeof(int)*img->width);
 		for(y = 0; y<img->width; y++){
-			if((img->triads[x][y].r*100)/255 > umbral ){
+			if(img->triads[x][y].r > umbral ){
                 img->triads[x][y].r = 255;
                 img->triads[x][y].g = 255;
                 img->triads[x][y].b = 255;
+                img->triads[x][y].a = 255;
 			}else{
+				black++;
                 img->triads[x][y].r = 0;
                 img->triads[x][y].g = 0;
                 img->triads[x][y].b = 0;
+                img->triads[x][y].a = 255;
             }
+            total ++;
 		}
+	}
+	result[0] = black;
+	result[1] = total;
+	return result;
+}
+
+
+int calculateNearlyBlack(int *binarization,  int umbralForClasify){
+	int numOfBlacks = binarization[0];
+	int numTotalPixels = binarization[1];
+	int percentOfBlack = (numOfBlacks*100)/numTotalPixels;
+	if(percentOfBlack > umbralForClasify){
+		return 1;
+	}else{
+		return 0;
 	}
 }
     

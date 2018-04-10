@@ -24,7 +24,7 @@ typedef struct {
 }Image;
 
 
-Image *imageHandler(char *file_name, int umbral);
+int imageHandler(char *file_name, int umbral, int umbralNearlyBlack);
 FILE *openImage(char *file_name);
 void readImage(Image *img, FILE *file_pointer);
 void printPixelMatrix(Image *img);
@@ -32,4 +32,5 @@ void convertToGrayScale(Image *img);
 void closeImage(FILE *file_pointer);
 void writeGrayImage(Image *img, FILE *file_pointer);
 void cpy_img(char *nameFile, char *nameFileOut);
-void binarization(Image *img, int umbral);
+int* binarization(Image *img, int umbral);
+int calculateNearlyBlack(int *binarization,  int umbralForClasify);
