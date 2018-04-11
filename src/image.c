@@ -8,7 +8,7 @@
 #include <fcntl.h>
 
 
-Image *imageHandler(char *file_name, int umbral){
+int imageHandler(char *file_name, int umbral, int umbralNearlyBlack){
   	Image *img = (Image*)malloc(sizeof(Image));
 
     
@@ -28,15 +28,14 @@ Image *imageHandler(char *file_name, int umbral){
     
     convertToGrayScale(img);
 	
-    binarization(img,umbral);
+    int numBlacks = binarization(img,umbral);
     //Finalmente se escribe la imágen resultante.
     writeGrayImage(img, file_pointer);
-	printf("\nb\n");
     
     //Se cierra la imagen
     closeImage(file_pointer);
-
-    return img;
+   	int totalPixels = img->width * img->height;
+   	return nearlyBlack(numBlacks,totalPixels,umbralNearlyBlack);
 }
 
 void cpy_img(char *nameFile, char *nameFileOut){
@@ -70,7 +69,7 @@ void writeGrayImage(Image *img, FILE *file_pointer){
 			count_matrix++;
 			data[count_matrix] = img->triads[x][y].r;//r
 			count_matrix++;
-			data[count_matrix] = img->triads[x][y].a;//r
+			data[count_matrix] = 255;//r
 			count_matrix++;
 			//Si se llega al final de la fila, se saltan tantos bytes como el padding diga.
 			if(y == img->width -1){
@@ -209,19 +208,22 @@ void convertToGrayScale(Image *img){
 
 	for(x =0 ; x<img->height; x++){
 		for(y = 0; y<img->width; y++){
-			img->triads[x][y].b = img->triads[x][y].b*0.11+img->triads[x][y].g*0.59+img->triads[x][y].r*0.3;
-			img->triads[x][y].g = img->triads[x][y].b*0.11+img->triads[x][y].g*0.59+img->triads[x][y].r*0.3;
-			img->triads[x][y].r = img->triads[x][y].b*0.11+img->triads[x][y].g*0.59+img->triads[x][y].r*0.3;
+			int calculo = img->triads[x][y].b*0.11+img->triads[x][y].g*0.59+img->triads[x][y].r*0.3;
+			img->triads[x][y].b = calculo;
+			img->triads[x][y].g = calculo;
+			img->triads[x][y].r = calculo;
+			img->triads[x][y].a = 255;
 		}
 	}
 
 
 }
 
-void binarization(Image *img, int umbral){
+int binarization(Image *img, int umbral){
 	
 	int x;
 	int y;
+	int numBlacks = 0;
 	int **result = (int**)malloc(sizeof(int*)*img->height);
 	for(x =0 ; x<img->height; x++){
 		result[x] = (int*)malloc(sizeof(int)*img->width);
@@ -234,8 +236,22 @@ void binarization(Image *img, int umbral){
                 img->triads[x][y].r = 0;
                 img->triads[x][y].g = 0;
                 img->triads[x][y].b = 0;
+                numBlacks++;
             }
 		}
+	}
+	return numBlacks;
+}
+
+int nearlyBlack(int numOfBlacks, int numTotal, int umbralNearlyBlack){
+
+	float percent = ((float)numOfBlacks/(float)numTotal )*100;
+	if(percent > umbralNearlyBlack){
+		printf("is black: %f\n",percent );
+		return 1;
+	}else{
+		printf("Is White %f\n", percent);
+		return 0;
 	}
 }
     

@@ -67,7 +67,7 @@ int main(int argc, char **argv){
 	
 	//Prueba de extracción de imágen.
 	for(x = 0; x<numImgs; x++){
-		imageHandler(imageNames[x],50);
+		printf("NearlyBlack %d = %d \n",x,imageHandler(imageNames[x],50,50));
 	}
 	
 	printf("\n=========== GrayScale ===========\n");
