@@ -15,13 +15,13 @@ Image *imageHandler(char *file_name, int umbral){
     //Se asigna un nombre al archivo de salida.
     char *fileNameOut = (char*)malloc(sizeof(char)*100);
     //Se guarda el archivo original
-    strcpy(fileNameOut,"original-");
+    strcpy(fileNameOut,"binarizado-");
     //Se asigna un identificador al archivo
     strcat(fileNameOut,file_name);
     //Se copia el archivo
     cpy_img(file_name,fileNameOut);
     //Se abre imagen
-    FILE *file_pointer = openImage(file_name);
+    FILE *file_pointer = openImage(fileNameOut);
     //Se lee la data
     readImage(img, file_pointer);
     //Se convierte a escala de grises
@@ -40,17 +40,16 @@ Image *imageHandler(char *file_name, int umbral){
 }
 
 void cpy_img(char *nameFile, char *nameFileOut){
-    printf("Copia de archivos\n");
-    int data1 =0;
-    
-    FILE *fileIn = fopen(nameFile,"r");
-    FILE *file2 = fopen ( nameFileOut , "w" );
-    
-    while ( (data1 = fgetc ( fileIn )) != EOF ) {
-        fputc ( data1, file2 );
-    }
-    fclose(fileIn);
-    
+    printf("Se copia el archivo\n");
+    char *command = (char*)malloc(sizeof(char)*100);
+    strcpy(command,"cp ");
+    char *cpy_nameFile = (char*)malloc(sizeof(char)*100);
+    strcpy(cpy_nameFile,nameFile); //nombre del archivo
+    strcat(command,cpy_nameFile); // cp nameFile
+    strcat(command," ./"); //cp nameFile ./
+    strcat(command,nameFileOut); //cp nameFile ./nameFileOut
+    printf("command: %s\n", command);
+    system(command);
 }
 
 void writeGrayImage(Image *img, FILE *file_pointer){
@@ -165,7 +164,7 @@ void readImage(Image *img, FILE *file_pointer){
 	}
 	int count_matrix = 0;
 	//Se calcula el salto para el padding.
-	int padding = -(img->width*4%8 -4) ;
+	int padding = 0;
 	//Se inicia la extracción de datos
 	for(x=img->height-1; x>=0; x--){
 		for(y=0; y<img->width;y++){
@@ -223,11 +222,11 @@ void binarization(Image *img, int umbral){
 	
 	int x;
 	int y;
-	int **result = (int**)malloc(sizeof(int)*img->height);
+	int **result = (int**)malloc(sizeof(int*)*img->height);
 	for(x =0 ; x<img->height; x++){
 		result[x] = (int*)malloc(sizeof(int)*img->width);
 		for(y = 0; y<img->width; y++){
-			if((img->triads[x][y].r*100)/255 > umbral ){
+			if(img->triads[x][y].r > umbral ){
                 img->triads[x][y].r = 255;
                 img->triads[x][y].g = 255;
                 img->triads[x][y].b = 255;
