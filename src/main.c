@@ -5,44 +5,31 @@
 #include <string.h>
 #include "image.h"
 
+	
 
 int main(int argc, char **argv){
 	
 
 
 
-	int op = 0;
-	printf("Ingrese el número de imágenes: \n");
-	int numImgs = 0;
-	scanf("%d",&numImgs);
-	char **imageNames = (char**)malloc(sizeof(char*)*numImgs);
-	int x;
-	for(x = 0; x<numImgs; x++){
-		imageNames[x] = (char*)malloc(sizeof(char)*100);
-		printf("Ingrese el nombre de la imágen %d sin su extensión y luego presione Enter...\n",x);
-		scanf("%s",imageNames[x]);
-		strcat(imageNames[x],".bmp");
-		fflush( stdin );
-		printf("Imagen: %s\n",imageNames[x]);
-	}
 
 
-	int imageNumber = -1;
-	int thresholdB = -1;
-	int thresholdC = -1;
+	int numImgs = -1;
+	int umbral = -1;
+	int umbralNearlyBlack = -1;
 	int flag = 0;
 	int aux;
 
 	while ((aux = getopt (argc, argv, "c:u:n:b")) != -1){
 		switch (aux){
 			case 'c':
-				imageNumber = atoi(optarg);
+				numImgs = atoi(optarg);
 				break;
 			case 'u':
-				thresholdB = atoi(optarg);
+				umbral = atoi(optarg);
 				break;
 			case 'n':
-				thresholdC = atoi(optarg);
+				umbralNearlyBlack = atoi(optarg);
 				break;
 			case 'b':
 				flag = 1;
@@ -53,27 +40,50 @@ int main(int argc, char **argv){
 		
 
 	}
-	//Después se activa. xd
-	//Comprobaciones
-	/*if ((imageNumber == -1) || (thresholdB == -1) || (thresholdC == -1)){
-		printf("Compruebe que ingreso todas las opciones (ver manual)\n");
-		return -1;
-	}
 
-	printf("cantImagenes: %i \numbralB: %i \numbralC: %i \nbandera: %i\n", imageNumber, thresholdB, thresholdC, flag);
-	*/
+
+	int op = 0;
+	char **imageNames = (char**)malloc(sizeof(char*)*numImgs);
+	int x;
+	for(x = 0; x<numImgs; x++){
+		imageNames[x] = (char*)malloc(sizeof(char)*100);
+		printf("Ingrese el nombre de la imágen %d sin su extensión y luego presione Enter...\n",x);
+		scanf("%s",imageNames[x]);
+		strcat(imageNames[x],".bmp");
+		fflush( stdin );
+		printf("Imagen: %s\n",imageNames[x]);
+	}
 	
 	
 	
 	//Prueba de extracción de imágen.
+	int *resultsNearlyBlack = (int*)malloc(sizeof(int)*numImgs);
 	for(x = 0; x<numImgs; x++){
-		printf("NearlyBlack %d = %d \n",x,imageHandler(imageNames[x],50,50));
+		//image handler retorna 0 -> no, 1 -> si.
+		resultsNearlyBlack[x] = imageHandler(imageNames[x],umbral,umbralNearlyBlack);
+		printf("NearlyBlack?: %d\n",resultsNearlyBlack[x] );
 	}
-	
+
+	if(flag == 1){
+		printf("|\timage\t|\t\tnearly black\t\t|\n" );
+	for(x = 0; x<numImgs; x++){
+		
+		printf("|---------------|---------------------------------------|\n");
+		if(resultsNearlyBlack[x] == 1){
+			printf("|\t%s\t|\t\tyes\t\t|\n",imageNames[x]);	
+		}else{
+			printf("|\t%s\t|\t\tno \t\t|\n",imageNames[x]);
+		}
+		
+
+		}	
+
+	}
+
+
 	printf("\n=========== GrayScale ===========\n");
-
-	//Copia archivos
-	
-
 	return 0;
 }
+	
+
+
