@@ -8,6 +8,8 @@ void cpy_img(char *nameFile, char *nameFileOut);
 int readImage(Image *img, FILE *file_pointer);
 FILE *openImage(char *file_name);
 
+int connection[2];
+
 int main(int argc, char const *argv[]) {
    
 
@@ -32,7 +34,7 @@ int main(int argc, char const *argv[]) {
 	* de pipeline al otro proceso.
 	*/
 	//Se hace pipeline
-
+	pipe(connection);
 	return 0;
 }
 
