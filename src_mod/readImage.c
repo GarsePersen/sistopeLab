@@ -1,24 +1,38 @@
-#include "image.h"
+﻿#include "image.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/types.h>
 
 void cpy_img(char *nameFile, char *nameFileOut);
 int readImage(Image *img, FILE *file_pointer);
 FILE *openImage(char *file_name);
 
-int connection[2];
-
 int main(int argc, char const *argv[]) {
    
 
-
-   /*
+	int fd = atoi(argv[2]);
+   
+	//Se hace pipeline
+	Image *prueba = malloc(sizeof(prueba));
+	printf("Inicializando en el hijo Image->type: 10\n");
+	prueba->type = 10;
+	int size = sizeof(prueba);
+	//Se envia el tamaño de la estructura
+	write(fd, &size, sizeof(size));
+	//Se envia la estructura
+	write(fd, prueba, sizeof(prueba));
+	
+	
+	
+	
+	
+	/*
 	Orden de los argumentos entrantes:
 	0 -> nombre del archivo.
 	*/
-	printf("nombreArchivo = %s\n", argv[1]);
+	/*printf("nombreArchivo = %s\n", argv[1]);
 	char *file_name = (char*)argv[1];
 	Image* img = (Image*)malloc(sizeof(Image));
 	char *fileNameOut = (char*)malloc(sizeof(char)*100); //Se asigna un nombre al archivo de salida.
@@ -30,11 +44,11 @@ int main(int argc, char const *argv[]) {
 	if(resultado == -1){ //Si la imagen no es bmp
 	    return -1;
 	}
-	/*Se dejan los datos en la estructura Image img para luego enviarlo a través
+	Se dejan los datos en la estructura Image img para luego enviarlo a través
 	* de pipeline al otro proceso.
 	*/
-	//Se hace pipeline
-	pipe(connection);
+	
+	
 	return 0;
 }
 

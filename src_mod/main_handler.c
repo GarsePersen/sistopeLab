@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/types.h>
+#include "image.h"
 
 
 int main(int argc, char const *argv[])
@@ -13,14 +14,26 @@ int main(int argc, char const *argv[])
 	//Se inicia el proceso para la lectura de la imagen.
 	pid_t pidLecturaImg;
 	int pipe_read[2];
+	pipe(pipe_read);
 	if((pidLecturaImg = fork())==0){
 		//Si es el hijo.
-		pipe(pipe_read);
-		int res = execlp("./readImg","readImg","prueba.bmp",(char*)NULL);
+		close(pipe_read[0]);
+		//Se convierte pipe a char*
+		char pipe_to_string[12];
+		snprintf(pipe_to_string, 12, "%i", pipe_read[1]);
+		int res = execlp("./readImage","readImage","prueba.bmp", &pipe_to_string,(char*)NULL);
 		printf("Resultado execlp = %u\n", res);
 	}else{
 		//Si soy el padre.
+		close(pipe_read[1]);
+		
+		int size;
+		read(pipe_read[0], &size, sizeof(size));
+		Image *pruebaPadre = malloc(size);
+		
 		wait(&pidLecturaImg);
+		read(pipe_read[0], pruebaPadre, sizeof(size));
+		printf("Respuesta en el padre de Image->type: %i", pruebaPadre->type);
 	}
 
 
