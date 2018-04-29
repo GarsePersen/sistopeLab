@@ -27,16 +27,13 @@ int main(int argc, char const *argv[])
 		//Si soy el padre.
 		close(pipe_read[1]);
 		
-		int size;
-		read(pipe_read[0], &size, sizeof(size));
-		printf("Size: %d\n", size);
-
-		Image *img = malloc(size);
+		Image *img = malloc(sizeof(img));
 		
 		wait(&pidLecturaImg);
-		read(pipe_read[0], img, sizeof(size));
+		read(pipe_read[0], img, sizeof(Image));
 		printf("Respuesta en el padre de Image->type: %i\n", img->type);
 		printf("Respuesta en padre image->width: %d\n", img->width);
+
 	}
 
 

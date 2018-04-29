@@ -35,15 +35,13 @@ int main(int argc, char const *argv[]) {
 	cpy_img(file_name,fileNameOut); //Se copia el archivo
 	FILE *file_pointer = openImage(fileNameOut); //Se abre imagen
 	int resultado = readImage(img, file_pointer); //Se lee la data
-	if(resultado == -1){ //Si la imagen no es bmp
-	    return -1;
-	}
-	printf("Hijo width: %d\n", img->width);
+	/*if(resultado == -1){ //Si la imagen no es bmp
+		return -1;
+	}*/
 	printf("Hijo type: %d\n", img->type);
-	int size = sizeof(img);
-	write(fd, &size, sizeof(size));
-	write(fd, img, sizeof(img));
+	printf("Hijo width: %d\n", img->width);
 
+	write(fd, img, sizeof(Image));
 	/*
 	Orden de los argumentos entrantes:
 	0 -> nombre del archivo.
@@ -107,10 +105,10 @@ Salida: Void
 int readImage(Image *img, FILE *file_pointer){
 	fread(&img->type, 1, 1, file_pointer); //1
 	fread(&img->type2, 1, 1, file_pointer); //1
-	if((img->type != 'B' ) && (img->type != 'M')){ //Se comprueba que el archivo sea del tipo bmp
+	/*if((img->type != 'B' ) && (img->type != 'M')){ //Se comprueba que el archivo sea del tipo bmp
 	    free(img);
 	    return -1;
-	}
+	}*/
 
 
 	fread(&img->fileSize, 4, 1, file_pointer);//5
