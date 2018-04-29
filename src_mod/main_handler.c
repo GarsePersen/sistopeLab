@@ -29,11 +29,14 @@ int main(int argc, char const *argv[])
 		
 		int size;
 		read(pipe_read[0], &size, sizeof(size));
-		Image *pruebaPadre = malloc(size);
+		printf("Size: %d\n", size);
+
+		Image *img = malloc(size);
 		
 		wait(&pidLecturaImg);
-		read(pipe_read[0], pruebaPadre, sizeof(size));
-		printf("Respuesta en el padre de Image->type: %i", pruebaPadre->type);
+		read(pipe_read[0], img, sizeof(size));
+		printf("Respuesta en el padre de Image->type: %i\n", img->type);
+		printf("Respuesta en padre image->width: %d\n", img->width);
 	}
 
 

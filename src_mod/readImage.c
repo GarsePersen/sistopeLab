@@ -14,6 +14,7 @@ int main(int argc, char const *argv[]) {
 
 	int fd = atoi(argv[2]);
    
+   /*
 	//Se hace pipeline
 	Image *prueba = malloc(sizeof(prueba));
 	printf("Inicializando en el hijo Image->type: 10\n");
@@ -23,11 +24,26 @@ int main(int argc, char const *argv[]) {
 	write(fd, &size, sizeof(size));
 	//Se envia la estructura
 	write(fd, prueba, sizeof(prueba));
+	*/
 	
-	
-	
-	
-	
+
+	Image *img = (Image*)malloc(sizeof(img));
+	char *file_name = (char*)argv[1];
+	char *fileNameOut = (char*)malloc(sizeof(char)*100); //Se asigna un nombre al archivo de salida.
+	strcpy(fileNameOut,"binarizado-"); //Se guarda el archivo original
+	strcat(fileNameOut,file_name); //Se asigna un identificador al archivo
+	cpy_img(file_name,fileNameOut); //Se copia el archivo
+	FILE *file_pointer = openImage(fileNameOut); //Se abre imagen
+	int resultado = readImage(img, file_pointer); //Se lee la data
+	if(resultado == -1){ //Si la imagen no es bmp
+	    return -1;
+	}
+	printf("Hijo width: %d\n", img->width);
+	printf("Hijo type: %d\n", img->type);
+	int size = sizeof(img);
+	write(fd, &size, sizeof(size));
+	write(fd, img, sizeof(img));
+
 	/*
 	Orden de los argumentos entrantes:
 	0 -> nombre del archivo.
