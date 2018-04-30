@@ -38,10 +38,22 @@ int main(int argc, char const *argv[]) {
 	/*if(resultado == -1){ //Si la imagen no es bmp
 		return -1;
 	}*/
+
 	printf("Hijo type: %d\n", img->type);
 	printf("Hijo width: %d\n", img->width);
+	printf("Prueba Triad Hijo [50][100] : (%d,%d,%d,%d)\n", img->triads[50][100].r,img->triads[50][100].g,img->triads[50][100].b,img->triads[50][100].a );
 
 	write(fd, img, sizeof(Image));
+	int x;
+	int y;
+	for(x =0; x<img->width; x++){
+//			printf("(%d,%d,%d)\n",img->triads[x][250].r,img->triads[x][250].g,img->triads[x][250].b );
+		for(y = 0; y<img->height; y++){
+			printf("[%d,%d] --> (%d,%d,%d)\n", x,y,img->triads[x][y].r,img->triads[x][y].g,img->triads[x][y].b);
+				write(fd,&img->triads[x][y],sizeof(Triad));
+		}
+	}
+
 	/*
 	Orden de los argumentos entrantes:
 	0 -> nombre del archivo.

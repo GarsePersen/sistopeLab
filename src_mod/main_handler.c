@@ -28,12 +28,33 @@ int main(int argc, char const *argv[])
 		close(pipe_read[1]);
 		
 		Image *img = malloc(sizeof(img));
+		img->triads = (Triad**)malloc(sizeof(Triad*)*512);
+		for (int i = 0; i < 512; i++)
+		{
+			img->triads[i] = (Triad*)malloc(sizeof(Triad)*512);
+		}
 		
 		wait(&pidLecturaImg);
 		read(pipe_read[0], img, sizeof(Image));
 		printf("Respuesta en el padre de Image->type: %i\n", img->type);
 		printf("Respuesta en padre image->width: %d\n", img->width);
+		printf("Respuesta en padre image->height: %d\n", img->height);
 
+		int x;
+		int y;
+		Triad** triads = (Triad**)malloc(sizeof(Triad*)*img->width);
+		Triad triad;
+		for(x =0; x<img->width; x++){
+			triads[x] = (Triad*)malloc(sizeof(Triad)*img->height);
+			for(y =0; y<img->height; y++){
+			//read(pipe_read[0],triad,sizeof(Triad)*img->height);
+				read(pipe_read[0],&triad,sizeof(Triad));
+				printf("(%d,%d,%d)\n", triad.r,triad.g,triad.b);
+			}
+		}
+
+
+		//printf("Prueba Triad Papi [50][100] : (%d,%d,%d,%d)\n", img->triads[50][100].r,img->triads[50][100].g,img->triads[50][100].b,img->triads[50][100].a );
 	}
 
 
