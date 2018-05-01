@@ -4,29 +4,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
-
-void cpy_img(char *nameFile, char *nameFileOut);
-
-FILE *openImage(char *file_name);
-
 int main(int argc, char const *argv[]) {
    
 
 	int fd = atoi(argv[2]);
    
-   /*
-	//Se hace pipeline
-	Image *prueba = malloc(sizeof(prueba));
-	printf("Inicializando en el hijo Image->type: 10\n");
-	prueba->type = 10;
-	int size = sizeof(prueba);
-	//Se envia el tamaño de la estructura
-	write(fd, &size, sizeof(size));
-	//Se envia la estructura
-	write(fd, prueba, sizeof(prueba));
-	*/
-	
-
 	Image *img = (Image*)malloc(sizeof(img));
 	char *file_name = (char*)argv[1];
 	char *fileNameOut = (char*)malloc(sizeof(char)*100); //Se asigna un nombre al archivo de salida.
@@ -35,14 +17,12 @@ int main(int argc, char const *argv[]) {
 	cpy_img(file_name,fileNameOut); //Se copia el archivo
 	FILE *file_pointer = openImage(fileNameOut); //Se abre imagen
 	unsigned char *resultado = readImage(img, file_pointer); //Se lee la data
+	
+	//IMPORTANTE NO OLVIDAR VALIDAR
 	/*if(resultado == -1){ //Si la imagen no es bmp
 		return -1;
 	}*/
 
-	printf("Hijo type: %d\n", img->type);
-	printf("Hijo width: %d\n", img->width);
-	//printf("Prueba Triad Hijo [50][100] : (%d,%d,%d,%d)\n", img->triads[50][100].r,img->triads[50][100].g,img->triads[50][100].b,img->triads[50][100].a );
-	
 	write(fd, &img->width, sizeof(int));
 	write(fd, &img->height, sizeof(int));
 	write(fd, &img->tam_img, sizeof(int));
@@ -51,35 +31,20 @@ int main(int argc, char const *argv[]) {
 		write(fd, &resultado[aux], sizeof(unsigned char));
 	}
 	
+	//Pipe tercer pipe
 	/*
-	int x;
-	int y;
-	for(x =0; x<img->width; x++){
-//			printf("(%d,%d,%d)\n",img->triads[x][250].r,img->triads[x][250].g,img->triads[x][250].b );
-		for(y = 0; y<img->height; y++){
-			printf("[%d,%d] --> (%d,%d,%d)\n", x,y,img->triads[x][y].r,img->triads[x][y].g,img->triads[x][y].b);
-				write(fd,&img->triads[x][y],sizeof(Triad));
-		}
-	}
-	*/
-	/*
-	Orden de los argumentos entrantes:
-	0 -> nombre del archivo.
-	*/
-	/*printf("nombreArchivo = %s\n", argv[1]);
-	char *file_name = (char*)argv[1];
-	Image* img = (Image*)malloc(sizeof(Image));
-	char *fileNameOut = (char*)malloc(sizeof(char)*100); //Se asigna un nombre al archivo de salida.
-	strcpy(fileNameOut,"binarizado-"); //Se guarda el archivo original
-	strcat(fileNameOut,file_name); //Se asigna un identificador al archivo
-	cpy_img(file_name,fileNameOut); //Se copia el archivo
-	FILE *file_pointer = openImage(fileNameOut); //Se abre imagen
-	int resultado = readImage(img, file_pointer); //Se lee la data
-	if(resultado == -1){ //Si la imagen no es bmp
-	    return -1;
-	}
-	Se dejan los datos en la estructura Image img para luego enviarlo a través
-	* de pipeline al otro proceso.
+	int pipe_read[2];
+	pipe(pipe_read);
+	if((pidLecturaImg = fork())==0){
+		//Si es el hijo.
+		close(pipe_read[0]);
+		//Se convierte pipe a char*
+		char pipe_to_string[12];
+		snprintf(pipe_to_string, 12, "%i", pipe_read[1]);
+		printf("hola");
+		int res = execlp("./readImage","readImage","prueba.bmp", &pipe_to_string,(char*)NULL);
+		printf("Resultado execlp = %u\n", res);
+	}else{
 	*/
 	
 	
