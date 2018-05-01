@@ -27,7 +27,7 @@ typedef struct {
 //Funciones
 int imageHandler(char *file_name, int umbral, int nearlyBlack);
 FILE *openImage(char *file_name);
-char *readImage(Image *img, FILE *file_pointer);
+unsigned char *readImage(Image *img, FILE *file_pointer);
 void printPixelMatrix(Image *img);
 void convertToGrayScale(Image *img);
 void closeImage(FILE *file_pointer);

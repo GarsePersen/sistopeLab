@@ -34,7 +34,7 @@ int main(int argc, char const *argv[]) {
 	strcat(fileNameOut,file_name); //Se asigna un identificador al archivo
 	cpy_img(file_name,fileNameOut); //Se copia el archivo
 	FILE *file_pointer = openImage(fileNameOut); //Se abre imagen
-	char *resultado = readImage(img, file_pointer); //Se lee la data
+	unsigned char *resultado = readImage(img, file_pointer); //Se lee la data
 	/*if(resultado == -1){ //Si la imagen no es bmp
 		return -1;
 	}*/
@@ -43,8 +43,14 @@ int main(int argc, char const *argv[]) {
 	printf("Hijo width: %d\n", img->width);
 	//printf("Prueba Triad Hijo [50][100] : (%d,%d,%d,%d)\n", img->triads[50][100].r,img->triads[50][100].g,img->triads[50][100].b,img->triads[50][100].a );
 	
-	write(fd, img, sizeof(Image));
-	write(fd, resultado, sizeof(char)*img->tam_img);
+	write(fd, &img->width, sizeof(int));
+	write(fd, &img->height, sizeof(int));
+	write(fd, &img->tam_img, sizeof(int));
+	
+	for(int aux = 0; aux<img->tam_img; aux++){
+		write(fd, &resultado[aux], sizeof(unsigned char));
+	}
+	
 	/*
 	int x;
 	int y;
@@ -116,7 +122,7 @@ en la estructura img.
 Entrada: Struct Image, FILE *file_pointer (puntero a la imagen con la que se está trabajando)
 Salida: Void
 */
-char *readImage(Image *img, FILE *file_pointer){
+unsigned char *readImage(Image *img, FILE *file_pointer){
 	fread(&img->type, 1, 1, file_pointer); //1
 	fread(&img->type2, 1, 1, file_pointer); //1
 	/*if((img->type != 'B' ) && (img->type != 'M')){ //Se comprueba que el archivo sea del tipo bmp
@@ -158,7 +164,7 @@ char *readImage(Image *img, FILE *file_pointer){
 
 	fseek(file_pointer,img->dataPointer,SEEK_SET); //Se avanza tantos como el data pointer desde el inicio.
 
-	char *data = (char*)malloc(sizeof(char)*tam_img);
+	unsigned char *data = malloc(sizeof(unsigned char)*tam_img);
 	fread(data,tam_img,1,file_pointer); //Se extrae la data de la imagen.
 
 	int x;
