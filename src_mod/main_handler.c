@@ -36,30 +36,41 @@ int main(int argc, char const *argv[])
 		}
 		*/
 		
-		//read(pipe_read[0], img, sizeof(Image));
-		read(pipe_read[0], &img->width, sizeof(int));
-		read(pipe_read[0], &img->height, sizeof(int));
-		read(pipe_read[0], &img->tam_img, sizeof(int));
+		read(pipe_read[0], img, sizeof(Image));
 		//printf("Respuesta en el padre de Image->type: %i\n", img->type);
 		printf("Respuesta en padre image->width: %d\n", img->width);
 		printf("Respuesta en padre image->height: %d\n", img->height);
 		
 		
-		unsigned char *data = malloc(sizeof(unsigned char)*img->tam_img);
+		img->triads = (Triad**)malloc(sizeof(Triad*)*img->height); //Se asigna memoria para la matriz
+		for(int x = 0; x<img->width; x++){
+			img->triads[x] = (Triad*)malloc(sizeof(Triad)*img->width);
+		}
 		//read(pipe_read[0], data, sizeof(unsigned char)*img->tam_img);
 		int aux = 0;
-		for(aux = 0; aux<img->tam_img; aux++){
-			read(pipe_read[0], &data[aux], sizeof(unsigned char));
+		for(int x = 0; x<img->height; x++){
+			for(int y = 0; y<img->width; y++){
+				read(pipe_read[0], &img->triads[x][y].r, sizeof(unsigned char));
+				read(pipe_read[0], &img->triads[x][y].g, sizeof(unsigned char));
+				read(pipe_read[0], &img->triads[x][y].b, sizeof(unsigned char));
+				read(pipe_read[0], &img->triads[x][y].a, sizeof(unsigned char));
+			}
 		}
-		for(aux = 0; aux<img->tam_img; aux++){
-				printf("R: %i ", data[aux]);
-				aux++;
-				printf("B: %i ", data[aux]);
-				aux++;
-				printf("G: %i ", data[aux]);
-				aux++;
-				printf("A: %i\n", data[aux]);
+		for(int x = 0; x<img->height;x++){
+			for(int y = 0; y<img->width;y++){
+				printf("(%d %d %d)",img->triads[x][y].b,img->triads[x][y].g,img->triads[x][y].r);
+			}
+			printf("\n");
 		}
+		// for(aux = 0; aux<img->tam_img; aux++){
+				// printf("R: %i ", data[aux]);
+				// aux++;
+				// printf("B: %i ", data[aux]);
+				// aux++;
+				// printf("G: %i ", data[aux]);
+				// aux++;
+				// printf("A: %i\n", data[aux]);
+		// }
 		
 		/*
 		int x;

@@ -23,13 +23,20 @@ int main(int argc, char const *argv[]) {
 		return -1;
 	}*/
 
-	write(fd, &img->width, sizeof(int));
-	write(fd, &img->height, sizeof(int));
-	write(fd, &img->tam_img, sizeof(int));
+	write(fd, img, sizeof(Image));
 	
-	for(int aux = 0; aux<img->tam_img; aux++){
-		write(fd, &resultado[aux], sizeof(unsigned char));
+	
+	for(int x = 0; x<img->height; x++){
+		for(int y = 0; y<img->width; y++){
+			write(fd, &img->triads[x][y].r, sizeof(unsigned char));
+			write(fd, &img->triads[x][y].g, sizeof(unsigned char));
+			write(fd, &img->triads[x][y].b, sizeof(unsigned char));
+			write(fd, &img->triads[x][y].a, sizeof(unsigned char));
+		}
 	}
+	// for(int aux = 0; aux<img->tam_img; aux++){
+		// write(fd, &resultado[aux], sizeof(unsigned char));
+	// }
 	
 	//Pipe tercer pipe
 	/*
@@ -129,7 +136,7 @@ unsigned char *readImage(Image *img, FILE *file_pointer){
 
 	fseek(file_pointer,img->dataPointer,SEEK_SET); //Se avanza tantos como el data pointer desde el inicio.
 
-	unsigned char *data = malloc(sizeof(unsigned char)*tam_img);
+	unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char)*tam_img);
 	fread(data,tam_img,1,file_pointer); //Se extrae la data de la imagen.
 
 	int x;
@@ -139,8 +146,8 @@ unsigned char *readImage(Image *img, FILE *file_pointer){
 		img->triads[x] = (Triad*)malloc(sizeof(Triad)*img->width);
 	}
 	int count_matrix = 0;
-	for(x=img->height-1; x>=0; x--){ //Se inicia la extracción de datos
-		for(y=0; y<img->width;y++){
+	for(int x=img->height-1; x>=0; x--){ //Se inicia la extracción de datos
+		for(int y=0; y<img->width;y++){
 			img->triads[x][y].b = data[count_matrix];//r
 			count_matrix++;
 			img->triads[x][y].g = data[count_matrix];//r
@@ -151,6 +158,7 @@ unsigned char *readImage(Image *img, FILE *file_pointer){
 			count_matrix++;
 		}
 	}
+	
 
 	//Se libera memoria de data
 	//free(data);
