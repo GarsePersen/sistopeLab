@@ -25,9 +25,9 @@ int main(int argc, char const *argv[]) {
 
 	write(fd, img, sizeof(Image));
 	
-	
-	for(int x = 0; x<img->height; x++){
-		for(int y = 0; y<img->width; y++){
+	int x,y;
+	for(x = 0; x<img->height; x++){
+		for(y = 0; y<img->width; y++){
 			write(fd, &img->triads[x][y].r, sizeof(unsigned char));
 			write(fd, &img->triads[x][y].g, sizeof(unsigned char));
 			write(fd, &img->triads[x][y].b, sizeof(unsigned char));
@@ -146,8 +146,8 @@ unsigned char *readImage(Image *img, FILE *file_pointer){
 		img->triads[x] = (Triad*)malloc(sizeof(Triad)*img->width);
 	}
 	int count_matrix = 0;
-	for(int x=img->height-1; x>=0; x--){ //Se inicia la extracción de datos
-		for(int y=0; y<img->width;y++){
+	for(x=img->height-1; x>=0; x--){ //Se inicia la extracción de datos
+		for(y=0; y<img->width;y++){
 			img->triads[x][y].b = data[count_matrix];//r
 			count_matrix++;
 			img->triads[x][y].g = data[count_matrix];//r
