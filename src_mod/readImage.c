@@ -4,16 +4,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <limits.h>
 
 void cpy_img(char *nameFile, char *nameFileOut);
 int readImage(Image *img, FILE *file_pointer);
 FILE *openImage(char *file_name);
 
 int main(int argc, char const *argv[]) {
-   
+
 
 	int fd = atoi(argv[2]);
-   
+
    /*
 	//Se hace pipeline
 	Image *prueba = malloc(sizeof(prueba));
@@ -25,7 +26,7 @@ int main(int argc, char const *argv[]) {
 	//Se envia la estructura
 	write(fd, prueba, sizeof(prueba));
 	*/
-	
+
 
 	Image *img = (Image*)malloc(sizeof(img));
 	char *file_name = (char*)argv[1];
@@ -38,10 +39,30 @@ int main(int argc, char const *argv[]) {
 	/*if(resultado == -1){ //Si la imagen no es bmp
 		return -1;
 	}*/
-	printf("Hijo type: %d\n", img->type);
-	printf("Hijo width: %d\n", img->width);
+   printf("Hijo->type :%d\n",img->type );
+   printf("Hijo->type2 :%d\n",img->type2 );
+   printf("Hijo->fileSize :%d\n",img->fileSize );
+   printf("Hijo->reserved1 :%d\n",img->reserved1 );
+   printf("Hijo->reserved2 :%d\n",img->reserved2 );
+   printf("Hijo->dataPointer :%d\n",img->dataPointer );
+   printf("Hijo->headerSize :%d\n",img->headerSize );
+   printf("Hijo->width :%d\n",img->width );
+   printf("Hijo->height :%d\n",img->height );
+   printf("Hijo->planes :%d\n",img->planes );
+   printf("Hijo->tam_img :%d\n",img->tam_img );
+   printf("Hijo->bitPerPixel :%d\n",img->bitPerPixel );
+   printf("Hijo->isCompressed :%d\n",img->isCompressed );
+   printf("Hijo->primeraTerna: (%d,%d,%d,%d)\n",img->triads[0][0].r,
+img->triads[0][0].g,img->triads[0][0].b,img->triads[0][0].a );
 
+   printf("\n####\nSe escriben los datos en el pipe hacia el padre\n####\n");
 	write(fd, img, sizeof(Image));
+
+   //Se escriben los valores de la Triada.
+   int x,acum;
+   printf("Size: %d\n", sizeof(Triad**)*img->width);
+   write(fd,&img->triads,sizeof(Triad**)*img->width);
+
 	/*
 	Orden de los argumentos entrantes:
 	0 -> nombre del archivo.
@@ -61,8 +82,8 @@ int main(int argc, char const *argv[]) {
 	Se dejan los datos en la estructura Image img para luego enviarlo a través
 	* de pipeline al otro proceso.
 	*/
-	
-	
+
+
 	return 0;
 }
 

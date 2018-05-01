@@ -8,7 +8,7 @@
 
 int main(int argc, char const *argv[])
 {
-	
+
 	printf("Se inicia el pipeline.\n");
 
 	//Se inicia el proceso para la lectura de la imagen.
@@ -20,21 +20,58 @@ int main(int argc, char const *argv[])
 		close(pipe_read[0]);
 		//Se convierte pipe a char*
 		char pipe_to_string[12];
+		
 		snprintf(pipe_to_string, 12, "%i", pipe_read[1]);
 		int res = execlp("./readImage","readImage","prueba.bmp", &pipe_to_string,(char*)NULL);
 		printf("Resultado execlp = %u\n", res);
 	}else{
 		//Si soy el padre.
 		close(pipe_read[1]);
-		
+
 		Image *img = malloc(sizeof(img));
-		
+
 		wait(&pidLecturaImg);
 		read(pipe_read[0], img, sizeof(Image));
-		printf("Respuesta en el padre de Image->type: %i\n", img->type);
-		printf("Respuesta en padre image->width: %d\n", img->width);
+		//Se leen las triadas de la imagen
+		img->triads = (Triad**)malloc(sizeof(Triad*)*img->width);
+		int x,y,z;
+		read(pipe_read[0],&img->triads,sizeof(Triad**)*img->width);
+
+
+		printf("Padre->type :%d\n",img->type );
+		printf("Padre->type2 :%d\n",img->type2 );
+		printf("Padre->fileSize :%d\n",img->fileSize );
+		printf("Padre->reserved1 :%d\n",img->reserved1 );
+		printf("Padre->reserved2 :%d\n",img->reserved2 );
+		printf("Padre->dataPointer :%d\n",img->dataPointer );
+		printf("Padre->headerSize :%d\n",img->headerSize );
+		printf("Padre->width :%d\n",img->width );
+		printf("Padre->height :%d\n",img->height );
+		printf("Padre->planes :%d\n",img->planes );
+		printf("Padre->tam_img :%d\n",img->tam_img );
+		printf("Padre->bitPerPixel :%d\n",img->bitPerPixel );
+		printf("Padre->isCompressed :%d\n",img->isCompressed );
+		printf("Padre->primeraTerna: (%d,%d,%d,%d)\n",img->triads[0][0].r,
+	img->triads[0][0].g,img->triads[0][0].b,img->triads[0][0].a );
+
 
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
