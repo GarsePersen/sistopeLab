@@ -21,25 +21,46 @@ int main(int argc, char const *argv[])
 		//Se convierte pipe a char*
 		char pipe_to_string[12];
 		snprintf(pipe_to_string, 12, "%i", pipe_read[1]);
-		int res = execlp("./readImage","readImage","prueba.bmp", &pipe_to_string,(char*)NULL);
+		printf("hola");
+		int res = execlp("./readImage","readImage","prueba3x3.bmp", &pipe_to_string,(char*)NULL);
 		printf("Resultado execlp = %u\n", res);
 	}else{
 		//Si soy el padre.
 		close(pipe_read[1]);
 		
 		Image *img = malloc(sizeof(img));
-		img->triads = (Triad**)malloc(sizeof(Triad*)*512);
+		/*img->triads = (Triad**)malloc(sizeof(Triad*)*512);
 		for (int i = 0; i < 512; i++)
 		{
 			img->triads[i] = (Triad*)malloc(sizeof(Triad)*512);
 		}
+		*/
 		
-		wait(&pidLecturaImg);
 		read(pipe_read[0], img, sizeof(Image));
 		printf("Respuesta en el padre de Image->type: %i\n", img->type);
 		printf("Respuesta en padre image->width: %d\n", img->width);
 		printf("Respuesta en padre image->height: %d\n", img->height);
-
+		
+		img->triads = (Triad**)malloc(sizeof(Triad*)*img->height); //Se asigna memoria para la matriz
+		for(int x = 0; x<img->width; x++){
+			img->triads[x] = (Triad*)malloc(sizeof(Triad)*img->width);
+		}
+		char *data = malloc(sizeof(char)*img->tam_img);
+		read(pipe_read[0], data, sizeof(char)*img->tam_img);
+		int aux = 0;
+		for(int x=img->height-1; x>=0; x--){
+			for(int y=0; y<img->width;y++){
+				printf("R: %i ", data[aux]);
+				aux++;
+				printf("B: %i ", data[aux]);
+				aux++;
+				printf("G: %i ", data[aux]);
+				aux++;
+				printf("A: %i\n", data[aux]);
+				aux++;
+			}
+		}
+		/*
 		int x;
 		int y;
 		Triad** triads = (Triad**)malloc(sizeof(Triad*)*img->width);
@@ -49,10 +70,10 @@ int main(int argc, char const *argv[])
 			for(y =0; y<img->height; y++){
 			//read(pipe_read[0],triad,sizeof(Triad)*img->height);
 				read(pipe_read[0],&triad,sizeof(Triad));
-				printf("(%d,%d,%d)\n", triad.r,triad.g,triad.b);
+				//printf("(%d,%d,%d)\n", triad.r,triad.g,triad.b);
 			}
 		}
-
+		*/
 
 		//printf("Prueba Triad Papi [50][100] : (%d,%d,%d,%d)\n", img->triads[50][100].r,img->triads[50][100].g,img->triads[50][100].b,img->triads[50][100].a );
 	}

@@ -12,5 +12,5 @@ readImage.o: readImage.c image.h
 	gcc $(FLAGS) -c readImage.c -o readImage.o
 	
 clean:
-	rm -f .*swp *.o .*swo .*swn  *.swo *.swn *.swp lab.exe lab
+	rm -f .*swp *.o .*swo .*swn  *.swo *.swn *.swp *.exe lab
 

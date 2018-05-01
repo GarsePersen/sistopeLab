@@ -6,7 +6,7 @@
 #include <sys/types.h>
 
 void cpy_img(char *nameFile, char *nameFileOut);
-int readImage(Image *img, FILE *file_pointer);
+
 FILE *openImage(char *file_name);
 
 int main(int argc, char const *argv[]) {
@@ -34,16 +34,18 @@ int main(int argc, char const *argv[]) {
 	strcat(fileNameOut,file_name); //Se asigna un identificador al archivo
 	cpy_img(file_name,fileNameOut); //Se copia el archivo
 	FILE *file_pointer = openImage(fileNameOut); //Se abre imagen
-	int resultado = readImage(img, file_pointer); //Se lee la data
+	char *resultado = readImage(img, file_pointer); //Se lee la data
 	/*if(resultado == -1){ //Si la imagen no es bmp
 		return -1;
 	}*/
 
 	printf("Hijo type: %d\n", img->type);
 	printf("Hijo width: %d\n", img->width);
-	printf("Prueba Triad Hijo [50][100] : (%d,%d,%d,%d)\n", img->triads[50][100].r,img->triads[50][100].g,img->triads[50][100].b,img->triads[50][100].a );
-
+	//printf("Prueba Triad Hijo [50][100] : (%d,%d,%d,%d)\n", img->triads[50][100].r,img->triads[50][100].g,img->triads[50][100].b,img->triads[50][100].a );
+	
 	write(fd, img, sizeof(Image));
+	write(fd, resultado, sizeof(char)*img->tam_img);
+	/*
 	int x;
 	int y;
 	for(x =0; x<img->width; x++){
@@ -53,7 +55,7 @@ int main(int argc, char const *argv[]) {
 				write(fd,&img->triads[x][y],sizeof(Triad));
 		}
 	}
-
+	*/
 	/*
 	Orden de los argumentos entrantes:
 	0 -> nombre del archivo.
@@ -114,7 +116,7 @@ en la estructura img.
 Entrada: Struct Image, FILE *file_pointer (puntero a la imagen con la que se está trabajando)
 Salida: Void
 */
-int readImage(Image *img, FILE *file_pointer){
+char *readImage(Image *img, FILE *file_pointer){
 	fread(&img->type, 1, 1, file_pointer); //1
 	fread(&img->type2, 1, 1, file_pointer); //1
 	/*if((img->type != 'B' ) && (img->type != 'M')){ //Se comprueba que el archivo sea del tipo bmp
@@ -156,7 +158,7 @@ int readImage(Image *img, FILE *file_pointer){
 
 	fseek(file_pointer,img->dataPointer,SEEK_SET); //Se avanza tantos como el data pointer desde el inicio.
 
-	unsigned char *data = (unsigned char*)malloc(sizeof(char)*tam_img);
+	char *data = (char*)malloc(sizeof(char)*tam_img);
 	fread(data,tam_img,1,file_pointer); //Se extrae la data de la imagen.
 
 	int x;
@@ -180,8 +182,8 @@ int readImage(Image *img, FILE *file_pointer){
 	}
 
 	//Se libera memoria de data
-	free(data);
+	//free(data);
 
-	return 0;
+	return data;
 
 }
