@@ -21,14 +21,13 @@ int main(int argc, char const *argv[])
 		//Se convierte pipe a char*
 		char pipe_to_string[12];
 		snprintf(pipe_to_string, 12, "%i", pipe_read[1]);
-		printf("hola");
 		int res = execlp("./readImage","readImage","prueba.bmp", &pipe_to_string,(char*)NULL);
 		printf("Resultado execlp = %u\n", res);
 	}else{
 		//Si soy el padre.
 		close(pipe_read[1]);
 		
-		Image *img = malloc(sizeof(img));
+		Image *img = (Image*) malloc(sizeof(img));
 		/*img->triads = (Triad**)malloc(sizeof(Triad*)*512);
 		for (int i = 0; i < 512; i++)
 		{
@@ -36,58 +35,51 @@ int main(int argc, char const *argv[])
 		}
 		*/
 		
-		read(pipe_read[0], img, sizeof(Image));
+		//read(pipe_read[0], img, sizeof(Image));
 		//printf("Respuesta en el padre de Image->type: %i\n", img->type);
 		printf("Respuesta en padre image->width: %d\n", img->width);
 		printf("Respuesta en padre image->height: %d\n", img->height);
 		
 		int aux, x, y;
-		img->triads = (Triad**)malloc(sizeof(Triad*)*img->height); //Se asigna memoria para la matriz
-		for(x = 0; x<img->width; x++){
-			img->triads[x] = (Triad*)malloc(sizeof(Triad)*img->width);
-		}
-		//read(pipe_read[0], data, sizeof(unsigned char)*img->tam_img);
-		
-		for(x = 0; x<img->height; x++){
-			for(y = 0; y<img->width; y++){
-				read(pipe_read[0], &img->triads[x][y].r, sizeof(unsigned char));
-				read(pipe_read[0], &img->triads[x][y].g, sizeof(unsigned char));
-				read(pipe_read[0], &img->triads[x][y].b, sizeof(unsigned char));
-				read(pipe_read[0], &img->triads[x][y].a, sizeof(unsigned char));
-			}
-		}
-		for(x = 0; x<img->height;x++){
-			for(y = 0; y<img->width;y++){
-				printf("(%d %d %d)",img->triads[x][y].b,img->triads[x][y].g,img->triads[x][y].r);
-			}
-			printf("\n");
-		}
-		// for(aux = 0; aux<img->tam_img; aux++){
-				// printf("R: %i ", data[aux]);
-				// aux++;
-				// printf("B: %i ", data[aux]);
-				// aux++;
-				// printf("G: %i ", data[aux]);
-				// aux++;
-				// printf("A: %i\n", data[aux]);
-		// }
-		
-		/*
-		int x;
-		int y;
-		Triad** triads = (Triad**)malloc(sizeof(Triad*)*img->width);
-		Triad triad;
-		for(x =0; x<img->width; x++){
-			triads[x] = (Triad*)malloc(sizeof(Triad)*img->height);
-			for(y =0; y<img->height; y++){
-			//read(pipe_read[0],triad,sizeof(Triad)*img->height);
-				read(pipe_read[0],&triad,sizeof(Triad));
-				//printf("(%d,%d,%d)\n", triad.r,triad.g,triad.b);
-			}
-		}
-		*/
+	    unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char *)*512*512*4);
+        for(x = 0; x<512*512*4; x++){
+            read(pipe_read[0], &data[x], sizeof(unsigned char ));
 
-		//printf("Prueba Triad Papi [50][100] : (%d,%d,%d,%d)\n", img->triads[50][100].r,img->triads[50][100].g,img->triads[50][100].b,img->triads[50][100].a );
+        }
+        for(x = 0; x<512*512*4; x++){
+            printf(" %d ", data[x]);
+            if(x%4==0){
+                printf("\n");
+            }
+        }
+	    FILE *file_pointer = fopen("binarizado-prueba.bmp", "r+");
+        fread(&img->type, 1, 1, file_pointer); //1
+        fread(&img->type2, 1, 1, file_pointer); //1
+        /*if((img->type != 'B' ) && (img->type != 'M')){ //Se comprueba que el archivo sea del tipo bmp
+          free(img);
+          return -1;
+          }*/
+
+
+        fread(&img->fileSize, 4, 1, file_pointer);//5
+
+        fread(&img->reserved1, 2, 1, file_pointer);//7
+
+        fread(&img->reserved2, 2, 1, file_pointer);//9
+
+        fread(&img->dataPointer, 4, 1, file_pointer);//13
+
+        fseek(file_pointer,img->dataPointer,SEEK_SET); //Se avanza tantos como el data pointer desde el inicio.
+	    for(x=0; x<512*512*4; x++){
+            fwrite(&data[x],sizeof(unsigned char),1,file_pointer); //Se extrae la data de la imagen.
+
+        }
+
+        /*for(x = 0; x<img->height;x++){
+			for(y = 0; y<img->width;y++){
+				printf("(%d)",img->triads[x][y].r);
+			}
+		}*/
 	}
 
 

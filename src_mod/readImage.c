@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 int main(int argc, char const *argv[]) {
+    printf("HOLA");
    
 
 	int fd = atoi(argv[2]);
@@ -23,17 +24,19 @@ int main(int argc, char const *argv[]) {
 		return -1;
 	}*/
 
-	write(fd, img, sizeof(Image));
-	
+	printf("\nHIJO: %d\n", resultado[0]);
+    int x;
+    for(x = 0; x<512*512*4; x++){
+	    write(fd, &resultado[x], sizeof(unsigned char ));
+
+    }
+    	/*
 	int x,y;
-	for(x = 0; x<img->height; x++){
-		for(y = 0; y<img->width; y++){
-			write(fd, &img->triads[x][y].r, sizeof(unsigned char));
-			write(fd, &img->triads[x][y].g, sizeof(unsigned char));
-			write(fd, &img->triads[x][y].b, sizeof(unsigned char));
-			write(fd, &img->triads[x][y].a, sizeof(unsigned char));
+	for(x = 0; x<10; x++){
+		for(y = 0; y<10; y++){
+			write(fd, &img->triads[x][y].r, sizeof(unsigned char ));
 		}
-	}
+	}*/
 	// for(int aux = 0; aux<img->tam_img; aux++){
 		// write(fd, &resultado[aux], sizeof(unsigned char));
 	// }
@@ -136,7 +139,7 @@ unsigned char *readImage(Image *img, FILE *file_pointer){
 
 	fseek(file_pointer,img->dataPointer,SEEK_SET); //Se avanza tantos como el data pointer desde el inicio.
 
-	unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char)*tam_img);
+	unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char *)*tam_img);
 	fread(data,tam_img,1,file_pointer); //Se extrae la data de la imagen.
 
 	int x;

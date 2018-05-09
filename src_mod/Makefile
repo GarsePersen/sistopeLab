@@ -1,4 +1,4 @@
-FLAGS= -g -Wall
+CFLAGS= -g -Wall
 
 all: lab readImage
 
