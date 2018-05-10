@@ -27,13 +27,15 @@ int main(int argc, char const *argv[])
 		//Si soy el padre.
 		close(pipe_read[1]);
 		
+		wait(&pidLecturaImg);
+	/*
 		Image *img = (Image*) malloc(sizeof(img));
-		/*img->triads = (Triad**)malloc(sizeof(Triad*)*512);
+		img->triads = (Triad**)malloc(sizeof(Triad*)*512);
 		for (int i = 0; i < 512; i++)
 		{
 			img->triads[i] = (Triad*)malloc(sizeof(Triad)*512);
 		}
-		*/
+		
 		
 		//read(pipe_read[0], img, sizeof(Image));
 		//printf("Respuesta en el padre de Image->type: %i\n", img->type);
@@ -55,10 +57,10 @@ int main(int argc, char const *argv[])
 	    FILE *file_pointer = fopen("binarizado-prueba.bmp", "r+");
         fread(&img->type, 1, 1, file_pointer); //1
         fread(&img->type2, 1, 1, file_pointer); //1
-        /*if((img->type != 'B' ) && (img->type != 'M')){ //Se comprueba que el archivo sea del tipo bmp
+        if((img->type != 'B' ) && (img->type != 'M')){ //Se comprueba que el archivo sea del tipo bmp
           free(img);
           return -1;
-          }*/
+          }
 
 
         fread(&img->fileSize, 4, 1, file_pointer);//5
@@ -75,11 +77,12 @@ int main(int argc, char const *argv[])
 
         }
 
-        /*for(x = 0; x<img->height;x++){
+        for(x = 0; x<img->height;x++){
 			for(y = 0; y<img->width;y++){
 				printf("(%d)",img->triads[x][y].r);
 			}
-		}*/
+		}
+		*/
 	}
 
 

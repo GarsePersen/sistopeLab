@@ -3,33 +3,74 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/wait.h>
 #include <sys/types.h>
 int main(int argc, char const *argv[]) {
-    printf("HOLA");
+    
+	printf("Se inicia el readImage \n");
+	pid_t pidRead_gray;
+	//Pipe para enviar la matriz de la imagen
+	int pipeRead_gray[2];
+	pipe(pipeRead_gray);
+	
+
+	if((pidRead_gray = fork())== 0){
+		printf("Soy el hijo \n");
+		close(pipeRead_gray[1]);
+		char pipe_readGray_toString[12];
+		//Le paso el canal de lectura al hijo
+
+		dup2(pipeRead_gray[0],STDOUT_FILENO);
+
+		printf("Pase read img\n");
+		snprintf(pipe_readGray_toString,12,"%i",pipeRead_gray[0]);
+		int id = execlp("./grayScale","grayScale",&pipe_readGray_toString,(char*)NULL);
+		printf("id : %d\n",id);
+		/*
+		*/
+		
+	}else{
+		//Soy el padre
+		//Se cierra el canal del read
+		close(pipeRead_gray[0]);
+		Image *img = (Image*)malloc(sizeof(img));
+		char *file_name = (char*)argv[1];
+		char *fileNameOut = (char*)malloc(sizeof(char)*100); //Se asigna un nombre al archivo de salida.
+		strcpy(fileNameOut,"binarizado-"); //Se guarda el archivo original
+		strcat(fileNameOut,file_name); //Se asigna un identificador al archivo
+		cpy_img(file_name,fileNameOut); //Se copia el archivo
+		FILE *file_pointer = openImage(fileNameOut); //Se abre imagen
+		unsigned char *resultado = readImage(img, file_pointer); //Se lee la data
+		int x;
+		fclose(file_pointer);
+		//Se escriben los valores de la matriz en el pipe para que sean leídos por
+		//el hijo.
+		write(pipeRead_gray[1], &img->width, sizeof(int ));
+		write(pipeRead_gray[1], &img->height, sizeof(int ));
+		for(x = 0; x<img->tam_img; x++){
+			
+			write(pipeRead_gray[1], &resultado[x], sizeof(unsigned char ));
+		}
+		printf("Termine\n");
+
+		wait(&pidRead_gray);
+	}
+
+
+
    
 
-	int fd = atoi(argv[2]);
+	
    
-	Image *img = (Image*)malloc(sizeof(img));
-	char *file_name = (char*)argv[1];
-	char *fileNameOut = (char*)malloc(sizeof(char)*100); //Se asigna un nombre al archivo de salida.
-	strcpy(fileNameOut,"binarizado-"); //Se guarda el archivo original
-	strcat(fileNameOut,file_name); //Se asigna un identificador al archivo
-	cpy_img(file_name,fileNameOut); //Se copia el archivo
-	FILE *file_pointer = openImage(fileNameOut); //Se abre imagen
-	unsigned char *resultado = readImage(img, file_pointer); //Se lee la data
+	
 	
 	//IMPORTANTE NO OLVIDAR VALIDAR
 	/*if(resultado == -1){ //Si la imagen no es bmp
 		return -1;
 	}*/
 
-	printf("\nHIJO: %d\n", resultado[0]);
-    int x;
-    for(x = 0; x<512*512*4; x++){
-	    write(fd, &resultado[x], sizeof(unsigned char ));
-
-    }
+	
+    
     	/*
 	int x,y;
 	for(x = 0; x<10; x++){
