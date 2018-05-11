@@ -25,17 +25,13 @@ int main(int argc, char const *argv[])
 
 		//Se cierra el canal de escritura
 		close(pipeGray_bin[1]);
-		char pipe_readGray_toString[12];
 		dup2(pipeGray_bin[0],STDOUT_FILENO);
 		//Le paso el canal de lectura al hijo
-		snprintf(pipe_readGray_toString,12,"%i",pipeGray_bin[0]);
-		int id = execlp("./binarization","binarization",&pipe_readGray_toString,(char*)NULL);
+		int id = execlp("./binarization","binarization",(char*)NULL);
 
 	}else{
 		//Se cierra el canal de lectura
 		close(pipeGray_bin[0]);
-		
-		int pipe_read = atoi(argv[1]);
 
 		//Se leen los datos desde readImage
 		int height, width;
@@ -45,19 +41,17 @@ int main(int argc, char const *argv[])
 		read(STDOUT_FILENO, &width, sizeof(int));
 		printf("height: %d\n",height);
 		printf("width: %d\n",width);
-		for(x = 0; x<512*512*4; x++){
+		for(x = 0; x<height*width*4; x++){
 			read(STDOUT_FILENO, &data[x], sizeof(unsigned char ));
 		}
-		for(x = 0; x<512*512*4; x++){
-			//printf(" %d ", data[x]);
-			if(x%4==0){
-			//  printf("\n");
-			}
-		}
-		unsigned char *data_gray = convertToGrayScale(data,512,512 );
+
+		unsigned char *data_gray = convertToGrayScale(data,width,height);
 
 		//Se escribe en el pipe para pasarlo a binarization
-		for(x = 0; x<512*512*4; x++){
+		//Se escribe el tamaño de la imágen.
+		write(pipeGray_bin[1], &height, sizeof(int));
+		write(pipeGray_bin[1], &width, sizeof(int));
+		for(x = 0; x<height*width*4; x++){
 			write(pipeGray_bin[1], &data_gray[x], sizeof(unsigned char ));
 		}
 	

@@ -21,7 +21,7 @@ int main(int argc, char const *argv[])
 		//Se convierte pipe a char*
 		char pipe_to_string[12];
 		snprintf(pipe_to_string, 12, "%i", pipe_read[1]);
-		int res = execlp("./readImage","readImage","prueba.bmp", &pipe_to_string,(char*)NULL);
+		int res = execlp("./readImage","readImage","imagen2.bmp", &pipe_to_string,(char*)NULL);
 		printf("Resultado execlp = %u\n", res);
 	}else{
 		//Si soy el padre.

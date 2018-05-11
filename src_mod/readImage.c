@@ -5,6 +5,9 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/types.h>
+
+#define READ 0
+#define WRITE 1
 int main(int argc, char const *argv[]) {
     
 	printf("Se inicia el readImage \n");
@@ -16,15 +19,13 @@ int main(int argc, char const *argv[]) {
 
 	if((pidRead_gray = fork())== 0){
 		printf("Soy el hijo \n");
-		close(pipeRead_gray[1]);
-		char pipe_readGray_toString[12];
+		close(pipeRead_gray[WRITE]);
 		//Le paso el canal de lectura al hijo
 
-		dup2(pipeRead_gray[0],STDOUT_FILENO);
+		dup2(pipeRead_gray[READ],STDOUT_FILENO);
 
 		printf("Pase read img\n");
-		snprintf(pipe_readGray_toString,12,"%i",pipeRead_gray[0]);
-		int id = execlp("./grayScale","grayScale",&pipe_readGray_toString,(char*)NULL);
+		int id = execlp("./grayScale","grayScale",(char*)NULL);
 		printf("id : %d\n",id);
 		/*
 		*/
@@ -32,7 +33,7 @@ int main(int argc, char const *argv[]) {
 	}else{
 		//Soy el padre
 		//Se cierra el canal del read
-		close(pipeRead_gray[0]);
+		close(pipeRead_gray[READ]);
 		Image *img = (Image*)malloc(sizeof(img));
 		char *file_name = (char*)argv[1];
 		char *fileNameOut = (char*)malloc(sizeof(char)*100); //Se asigna un nombre al archivo de salida.
@@ -45,11 +46,11 @@ int main(int argc, char const *argv[]) {
 		fclose(file_pointer);
 		//Se escriben los valores de la matriz en el pipe para que sean leídos por
 		//el hijo.
-		write(pipeRead_gray[1], &img->width, sizeof(int ));
-		write(pipeRead_gray[1], &img->height, sizeof(int ));
+		write(pipeRead_gray[WRITE], &img->height, sizeof(int ));
+		write(pipeRead_gray[WRITE], &img->width, sizeof(int ));
 		for(x = 0; x<img->tam_img; x++){
 			
-			write(pipeRead_gray[1], &resultado[x], sizeof(unsigned char ));
+			write(pipeRead_gray[WRITE], &resultado[x], sizeof(unsigned char ));
 		}
 		printf("Termine\n");
 

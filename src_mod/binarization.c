@@ -35,23 +35,20 @@ int main(int argc, char const *argv[])
         //Soy el padre.
         //Se cierra el canal de lectura
 		close(pipeBinWrite[0]);
-		int pipe_read = atoi(argv[1]);
 
 		//Se leen los datos desde readImage
 		int aux, x, y;
 		unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char *)*512*512*4);
-		for(x = 0; x<512*512*4; x++){
+		int width, height;
+		read(STDOUT_FILENO, &height, sizeof(int));
+		read(STDOUT_FILENO, &width, sizeof(int));
+		for(x = 0; x<width*height*4; x++){
 			read(STDOUT_FILENO, &data[x], sizeof(unsigned char ));
 
 		}
-		for(x = 0; x<512*512*4; x++){
-			//printf(" %d ", data[x]);
-			if(x%4==0){
-			//  printf("\n");
-			}
-		}
-		binarization(data,512,512,50 );
-
+		binarization(data,width,height,50 );
+		write(pipeBinWrite[1], &height, sizeof(int));
+		write(pipeBinWrite[1], &width, sizeof(int));
 		//Se escribe en el pipe para pasarlo a binarization
 		for(x = 0; x<512*512*4; x++){
 			write(pipeBinWrite[1], &data[x], sizeof(unsigned char ));
