@@ -38,10 +38,10 @@ int main(int argc, char const *argv[])
 
 		//Se leen los datos desde readImage
 		int aux, x, y;
-		unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char *)*512*512*4);
 		int width, height;
 		read(STDOUT_FILENO, &height, sizeof(int));
 		read(STDOUT_FILENO, &width, sizeof(int));
+		unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char *)*width*height*4);
 		for(x = 0; x<width*height*4; x++){
 			read(STDOUT_FILENO, &data[x], sizeof(unsigned char ));
 
@@ -50,7 +50,7 @@ int main(int argc, char const *argv[])
 		write(pipeBinWrite[1], &height, sizeof(int));
 		write(pipeBinWrite[1], &width, sizeof(int));
 		//Se escribe en el pipe para pasarlo a binarization
-		for(x = 0; x<512*512*4; x++){
+		for(x = 0; x<width*height*4; x++){
 			write(pipeBinWrite[1], &data[x], sizeof(unsigned char ));
 		}
         wait(&pidBinWrite);

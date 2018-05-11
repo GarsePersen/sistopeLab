@@ -15,10 +15,10 @@ int main(int argc, char const *argv[])
 {
     printf("Soy el write\n");
     int aux, x, y;
-    unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char *)*512*512*4);
     int width,height;
 	read(STDOUT_FILENO, &height, sizeof(int));
 	read(STDOUT_FILENO, &width, sizeof(int));
+    unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char *)*width*height*4);
 	for(x = 0; x<width*height*4; x++){
         read(STDOUT_FILENO, &data[x], sizeof(unsigned char ));
     }

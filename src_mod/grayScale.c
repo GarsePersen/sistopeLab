@@ -36,9 +36,9 @@ int main(int argc, char const *argv[])
 		//Se leen los datos desde readImage
 		int height, width;
 		int aux, x, y;
-		unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char *)*512*512*4);
 		read(STDOUT_FILENO, &height, sizeof(int));
 		read(STDOUT_FILENO, &width, sizeof(int));
+		unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char *)*width*height*4);
 		printf("height: %d\n",height);
 		printf("width: %d\n",width);
 		for(x = 0; x<height*width*4; x++){
