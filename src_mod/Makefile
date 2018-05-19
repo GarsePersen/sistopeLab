@@ -1,9 +1,9 @@
 CFLAGS= -g -Wall
 
-all: lab readImage grayScale binarization write
+all: pipeline readImage grayScale binarization category write
 
-lab: main_handler.o image.h
-	gcc $(FLAGS) image.h main_handler.o -g -o lab
+pipeline: main_handler.o image.h
+	gcc $(FLAGS) image.h main_handler.o -g -o pipeline
 
 readImage: readImage.o
 	gcc $(FLAGS) readImage.o -g -o readImage
@@ -23,6 +23,12 @@ binarization: binarization.o
 binarization.o: binarization.c image.h
 	gcc $(FLAGS) -c binarization.c -o binarization.o
 
+category: category.o
+	gcc $(FLAGS) category.o -g -o category
+
+category.o: category.c image.h
+	gcc $(FLAGS) -c category.c -o category.o
+
 write: write.o
 	gcc $(FLAGS) write.o -g -o write
 
@@ -30,5 +36,5 @@ write.o: write.c image.h
 	gcc $(FLAGS) -c write.c -o write.o
 
 clean:
-	rm -f .*swp *.o .*swo .*swn  *.swo *.swn *.swp *.exe lab
+	rm -f .*swp *.o .*swo .*swn *.stackdump binarizado-* *.swo *.swn *.swp *.exe  write pipeline category binarization readImage grayScale
 

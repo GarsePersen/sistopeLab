@@ -8,52 +8,58 @@
 #include <sys/wait.h>
 #include "image.h"
 
-
+#define READ 0
+#define WRITE 1
 
 int binarization(unsigned char *data,int width, int height, int umbral);
 
 int main(int argc, char const *argv[])
 {
 
-    pid_t pidBinWrite;
-    int pipeBinWrite[2];
-    pipe(pipeBinWrite);
+    pid_t pidBin_category;
+    int pipeBin_category[2];
+    pipe(pipeBin_category);
 
-    if((pidBinWrite = fork()) == 0){
+    if((pidBin_category = fork()) == 0){
         //Soy el hijo
         //Se cierra el canal de escritura
-		close(pipeBinWrite[1]);
-		dup2(pipeBinWrite[0], STDOUT_FILENO);
-		char pipe_readGray_toString[12];
-		//Le paso el canal de lectura al hijo
-		snprintf(pipe_readGray_toString,12,"%i",pipeBinWrite[0]);
-		int id = execlp("./write","write",&pipe_readGray_toString,(char*)NULL);
+		close(pipeBin_category[WRITE]);
+		dup2(pipeBin_category[READ], STDIN_FILENO);
+		int id = execlp("./category","category",argv[1],(char*)NULL);
 
 
     }else{
 
         //Soy el padre.
         //Se cierra el canal de lectura
-		close(pipeBinWrite[0]);
-
+		close(pipeBin_category[READ]);
+		int umbral, umbralNearlyBlack, flag;
+		read(STDIN_FILENO, &umbral, sizeof(int));
+		read(STDIN_FILENO, &umbralNearlyBlack, sizeof(int));
+		read(STDIN_FILENO, &flag, sizeof(int));
+		write(pipeBin_category[WRITE], &umbralNearlyBlack, sizeof(int));
+		write(pipeBin_category[WRITE], &flag, sizeof(int));
 		//Se leen los datos desde readImage
 		int aux, x, y;
 		int width, height;
-		read(STDOUT_FILENO, &height, sizeof(int));
-		read(STDOUT_FILENO, &width, sizeof(int));
+		read(STDIN_FILENO, &height, sizeof(int));
+		read(STDIN_FILENO, &width, sizeof(int));
 		unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char *)*width*height*4);
 		for(x = 0; x<width*height*4; x++){
-			read(STDOUT_FILENO, &data[x], sizeof(unsigned char ));
+			read(STDIN_FILENO, &data[x], sizeof(unsigned char ));
 
 		}
-		binarization(data,width,height,50 );
-		write(pipeBinWrite[1], &height, sizeof(int));
-		write(pipeBinWrite[1], &width, sizeof(int));
+		int numBlacks=binarization(data,width,height, umbral);
+		write(pipeBin_category[WRITE], &height, sizeof(int));
+		write(pipeBin_category[WRITE], &width, sizeof(int));
 		//Se escribe en el pipe para pasarlo a binarization
 		for(x = 0; x<width*height*4; x++){
-			write(pipeBinWrite[1], &data[x], sizeof(unsigned char ));
+			write(pipeBin_category[WRITE], &data[x], sizeof(unsigned char ));
 		}
-        wait(&pidBinWrite);
+		//Se escribe cantidad de pixeles negros
+		write(pipeBin_category[WRITE], &numBlacks, sizeof(int));
+
+        wait(&pidBin_category);
     }
     
 

@@ -5,116 +5,17 @@
 #include <sys/types.h>
 #include "image.h"
 
+#define READ 0
+#define WRITE 1
 
 int main(int argc, char const *argv[])
 {
-	
-	printf("Se inicia el pipeline.\n");
 
-	//Se inicia el proceso para la lectura de la imagen.
-	pid_t pidLecturaImg;
-	int pipe_read[2];
-	pipe(pipe_read);
-	if((pidLecturaImg = fork())==0){
-		//Si es el hijo.
-		close(pipe_read[0]);
-		//Se convierte pipe a char*
-		char pipe_to_string[12];
-		snprintf(pipe_to_string, 12, "%i", pipe_read[1]);
-		int res = execlp("./readImage","readImage","imagen2.bmp", &pipe_to_string,(char*)NULL);
-		printf("Resultado execlp = %u\n", res);
-	}else{
-		//Si soy el padre.
-		close(pipe_read[1]);
-		
-		wait(&pidLecturaImg);
-	/*
-		Image *img = (Image*) malloc(sizeof(img));
-		img->triads = (Triad**)malloc(sizeof(Triad*)*512);
-		for (int i = 0; i < 512; i++)
-		{
-			img->triads[i] = (Triad*)malloc(sizeof(Triad)*512);
-		}
-		
-		
-		//read(pipe_read[0], img, sizeof(Image));
-		//printf("Respuesta en el padre de Image->type: %i\n", img->type);
-		printf("Respuesta en padre image->width: %d\n", img->width);
-		printf("Respuesta en padre image->height: %d\n", img->height);
-		
-		int aux, x, y;
-	    unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char *)*512*512*4);
-        for(x = 0; x<512*512*4; x++){
-            read(pipe_read[0], &data[x], sizeof(unsigned char ));
-
-        }
-        for(x = 0; x<512*512*4; x++){
-            printf(" %d ", data[x]);
-            if(x%4==0){
-                printf("\n");
-            }
-        }
-	    FILE *file_pointer = fopen("binarizado-prueba.bmp", "r+");
-        fread(&img->type, 1, 1, file_pointer); //1
-        fread(&img->type2, 1, 1, file_pointer); //1
-        if((img->type != 'B' ) && (img->type != 'M')){ //Se comprueba que el archivo sea del tipo bmp
-          free(img);
-          return -1;
-          }
-
-
-        fread(&img->fileSize, 4, 1, file_pointer);//5
-
-        fread(&img->reserved1, 2, 1, file_pointer);//7
-
-        fread(&img->reserved2, 2, 1, file_pointer);//9
-
-        fread(&img->dataPointer, 4, 1, file_pointer);//13
-
-        fseek(file_pointer,img->dataPointer,SEEK_SET); //Se avanza tantos como el data pointer desde el inicio.
-	    for(x=0; x<512*512*4; x++){
-            fwrite(&data[x],sizeof(unsigned char),1,file_pointer); //Se extrae la data de la imagen.
-
-        }
-
-        for(x = 0; x<img->height;x++){
-			for(y = 0; y<img->width;y++){
-				printf("(%d)",img->triads[x][y].r);
-			}
-		}
-		*/
-	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	/*
-
-		int numImgs = -1;
+	int numImgs = -1;
 	int umbral = -1;
 	int umbralNearlyBlack = -1;
 	int flag = 0;
 	int aux;
-
 	while ((aux = getopt (argc, argv, "c:u:n:b")) != -1){
 		switch (aux){
 			case 'c':
@@ -154,26 +55,54 @@ int main(int argc, char const *argv[])
 	int op = 0;
 	char **imageNames = (char**)malloc(sizeof(char*)*numImgs);
 	int x;
+	printf("Ingrese el nombre del prefijo de sus imagenes y luego presione Enter...\n");
+	char *prefijo = malloc(sizeof(char)*100);
+	scanf("%s",prefijo);
 	for(x = 0; x<numImgs; x++){
 		imageNames[x] = (char*)malloc(sizeof(char)*100);
-		printf("Ingrese el nombre de la imágen %d sin su extensión y luego presione Enter...\n",x+1);
-		scanf("%s",imageNames[x]);
+		strcpy(imageNames[x],prefijo);
+		char strX[12];
+		sprintf(strX, "%d", x+1);
+		strcat(imageNames[x],"_");
+		strcat(imageNames[x],strX);
 		strcat(imageNames[x],".bmp");
-		fflush( stdin );
-		printf("Imagen: %s\n",imageNames[x]);
-
-        FILE *archivo = openImage(imageNames[x]); //Comprobación de que el archivo existe
+		//Comprobación de que el archivo existe
+		FILE *archivo = fopen(imageNames[x], "r"); 
         if(archivo == NULL){
-            printf("\nError: Archivo no existe, ingreselo nuevamente\n\n");
-            x--;
+            printf("\nError: El archivo %s no existe, favor de revisar.\n\n", imageNames[x])
+			;
+            return -1;
         } else {
-            closeImage(archivo);
+            fclose(archivo);
         }
 
 	}
-	*/
 
+	printf("\n|\timage\t|\t\tnearly black\t\t|\n" );
+    printf("|---------------|---------------------------------------|\n");
+        
+	for(x=0; x<numImgs; x++){
+		//Pipe para enviar la matriz de la imagen
+		int pipeMain_read[2];
+		pipe(pipeMain_read);
+		pid_t pidLecturaImg;
+		if((pidLecturaImg = fork())==0){
+			close(pipeMain_read[WRITE]);
+			//Le paso el canal de lectura al hijo			
+			dup2(pipeMain_read[READ],STDIN_FILENO);
 
+			int res = execlp("./readImage","readImage", imageNames[x],(char*)NULL);
+		}else{
+			//Si soy el padre.
+			close(pipeMain_read[READ]);
+			//Se escriben los parametros
+			write(pipeMain_read[WRITE], &umbral, sizeof(int));
+			write(pipeMain_read[WRITE], &umbralNearlyBlack, sizeof(int));
+			write(pipeMain_read[WRITE], &flag, sizeof(int));
+			wait(&pidLecturaImg);
+		}
+	}
+	
 
 	return 0;
 }

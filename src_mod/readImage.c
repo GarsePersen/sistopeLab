@@ -10,36 +10,42 @@
 #define WRITE 1
 int main(int argc, char const *argv[]) {
     
-	printf("Se inicia el readImage \n");
+
 	pid_t pidRead_gray;
 	//Pipe para enviar la matriz de la imagen
 	int pipeRead_gray[2];
 	pipe(pipeRead_gray);
 	
-
 	if((pidRead_gray = fork())== 0){
-		printf("Soy el hijo \n");
 		close(pipeRead_gray[WRITE]);
 		//Le paso el canal de lectura al hijo
+		
+		dup2(pipeRead_gray[READ],STDIN_FILENO);
 
-		dup2(pipeRead_gray[READ],STDOUT_FILENO);
 
-		printf("Pase read img\n");
-		int id = execlp("./grayScale","grayScale",(char*)NULL);
-		printf("id : %d\n",id);
+		int id = execlp("./grayScale","grayScale", argv[1],(char*)NULL);
 		/*
 		*/
 		
 	}else{
+		//Se leen parametros y es escriben en el hijo
+		int umbral, umbralNearlyBlack, flag;
+		read(STDIN_FILENO, &umbral, sizeof(int));
+		read(STDIN_FILENO, &umbralNearlyBlack, sizeof(int));
+		read(STDIN_FILENO, &flag, sizeof(int));
+		write(pipeRead_gray[WRITE], &umbral, sizeof(int));
+		write(pipeRead_gray[WRITE], &umbralNearlyBlack, sizeof(int));
+		write(pipeRead_gray[WRITE], &flag, sizeof(int));
 		//Soy el padre
 		//Se cierra el canal del read
 		close(pipeRead_gray[READ]);
 		Image *img = (Image*)malloc(sizeof(img));
-		char *file_name = (char*)argv[1];
-		char *fileNameOut = (char*)malloc(sizeof(char)*100); //Se asigna un nombre al archivo de salida.
+		char *file_name = (char *)argv[1];
+		char *fileNameOut = (char *)malloc(sizeof(char*)*100); //Se asigna un nombre al archivo de salida.
 		strcpy(fileNameOut,"binarizado-"); //Se guarda el archivo original
 		strcat(fileNameOut,file_name); //Se asigna un identificador al archivo
 		cpy_img(file_name,fileNameOut); //Se copia el archivo
+		
 		FILE *file_pointer = openImage(fileNameOut); //Se abre imagen
 		unsigned char *resultado = readImage(img, file_pointer); //Se lee la data
 		int x;
@@ -49,55 +55,13 @@ int main(int argc, char const *argv[]) {
 		write(pipeRead_gray[WRITE], &img->height, sizeof(int ));
 		write(pipeRead_gray[WRITE], &img->width, sizeof(int ));
 		for(x = 0; x<img->tam_img; x++){
-			
 			write(pipeRead_gray[WRITE], &resultado[x], sizeof(unsigned char ));
 		}
-		printf("Termine\n");
-
+		
 		wait(&pidRead_gray);
+		
 	}
 
-
-
-   
-
-	
-   
-	
-	
-	//IMPORTANTE NO OLVIDAR VALIDAR
-	/*if(resultado == -1){ //Si la imagen no es bmp
-		return -1;
-	}*/
-
-	
-    
-    	/*
-	int x,y;
-	for(x = 0; x<10; x++){
-		for(y = 0; y<10; y++){
-			write(fd, &img->triads[x][y].r, sizeof(unsigned char ));
-		}
-	}*/
-	// for(int aux = 0; aux<img->tam_img; aux++){
-		// write(fd, &resultado[aux], sizeof(unsigned char));
-	// }
-	
-	//Pipe tercer pipe
-	/*
-	int pipe_read[2];
-	pipe(pipe_read);
-	if((pidLecturaImg = fork())==0){
-		//Si es el hijo.
-		close(pipe_read[0]);
-		//Se convierte pipe a char*
-		char pipe_to_string[12];
-		snprintf(pipe_to_string, 12, "%i", pipe_read[1]);
-		printf("hola");
-		int res = execlp("./readImage","readImage","prueba.bmp", &pipe_to_string,(char*)NULL);
-		printf("Resultado execlp = %u\n", res);
-	}else{
-	*/
 	
 	
 	return 0;
