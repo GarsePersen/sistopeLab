@@ -6,15 +6,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <pthread.h>
 
 /*Función que maneja las imagenes. Se encarga de llamar a las funciones que abren, leen y cierran los archivos
 para mantener un encapsulamiento de estas.
 Entrada: char *file_name (Nombre archivo de entrada), int umbral, int umbralNearlyBlack
 Salida: Entero representando si la imagen es NearlyBlack o no.
 */
-int imageHandler(char *file_name, int umbral, int umbralNearlyBlack){
+int imageHandler(char *file_name, int umbral, int umbralNearlyBlack, int threads){
   	Image *img = (Image*)malloc(sizeof(Image));
-
     
     char *fileNameOut = (char*)malloc(sizeof(char)*100); //Se asigna un nombre al archivo de salida.
     strcpy(fileNameOut,"binarizado-"); //Se guarda el archivo original

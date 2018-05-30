@@ -9,7 +9,8 @@
 
 int main(int argc, char **argv){
 	
-
+    /*
+    SECCION SIN HEBRAS
 	int numImgs = -1;
 	int umbral = -1;
 	int umbralNearlyBlack = -1;
@@ -101,6 +102,18 @@ int main(int argc, char **argv){
         }	
 
     }
+    */
+
+    /*
+    **** SECCION PRUEBA DE HEBRAS ****
+    */
+    int umbral = 100;
+    int threads;
+    printf("Ingrese el numero de hebras: ");
+    scanf("%i",&threads);
+    int umbralNearlyBlack = 100;
+    int resultsNearlyBlack = imageHandler("prueba.bmp",umbral,umbralNearlyBlack, threads); //image handler retorna 0 -> no, 1 -> si.
+    printf("Se termino imagen, resultNearlyBlack: %i\n", resultsNearlyBlack);
     printf("\n");
     
 	return 0;
