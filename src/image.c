@@ -8,12 +8,13 @@
 #include <fcntl.h>
 #include <pthread.h>
 
+pthread_mutex_t mutex_acum;
 /*Función que maneja las imagenes. Se encarga de llamar a las funciones que abren, leen y cierran los archivos
 para mantener un encapsulamiento de estas.
 Entrada: char *file_name (Nombre archivo de entrada), int umbral, int umbralNearlyBlack
 Salida: Entero representando si la imagen es NearlyBlack o no.
 */
-int imageHandler(char *file_name, int umbral, int umbralNearlyBlack, int threads){
+int threadsHandler(char *file_name, int umbral, int umbralNearlyBlack, int number_threads){
   	Image *img = (Image*)malloc(sizeof(Image));
     
     char *fileNameOut = (char*)malloc(sizeof(char)*100); //Se asigna un nombre al archivo de salida.
@@ -22,45 +23,52 @@ int imageHandler(char *file_name, int umbral, int umbralNearlyBlack, int threads
     cpy_img(file_name,fileNameOut); //Se copia el archivo
 
     img->filePointer = openImage(fileNameOut); //Se abre imagen
-	pthread_t *read_thread = (pthread_t*)malloc(sizeof(pthread_t)*(threads+1));
-	pthread_create(&read_thread[0],NULL,readImage,(void *) img);
-    img->nThreads = threads;
-	int n_thread = 0;
-	for(int t = 1; t<threads +1;t++){
-		pthread_join(read_thread[t],NULL);
-	}
+	pthread_t *threads = (pthread_t*)malloc(sizeof(pthread_t)*(number_threads+1));
+	
+	
+    img->nThreads = number_threads;	
+	pthread_create(&threads[0],NULL,readImage,(void *) img);
+
+	pthread_join(threads[0],NULL);     
+	
 	
 	int numPixels = img->height * img->width;
-	int numPixelsXthread = numPixels/threads;
+	img->nThreads = number_threads;
+
+	int numPixelsXthread = numPixels/number_threads;
 	printf("numPixXThread: %d\n",numPixelsXthread);
-	int index = 0;
-	for(int i = 1; i < threads +1; i++){
-		if(i==0){
-			Triad *particion = (Triad*)malloc(sizeof(Triad)*numPixelsXthread);
-			particion[0].fin = numPixelsXthread;
-			for(int y = 0; y<numPixelsXthread; y++){
-				particion[y] = img->triads[y];
-			}
-			pthread_create(&read_thread[i],NULL,convertToGrayScale,(void *) particion);
-			index+=numPixelsXthread;
-		}else if( i == threads){
-			int indexParticion = 0;
-			Triad *particion = (Triad*)malloc(sizeof(Triad)*(numPixelsXthread+numPixels%(threads+1)));
-			particion[0].fin = numPixelsXthread;
-			for(int y = index; y<  index + numPixelsXthread + numPixels%(threads+1) ; y++, indexParticion++){
-				particion[indexParticion]=img->triads[y];
-			}
-			pthread_create(&read_thread[i],NULL,convertToGrayScale,(void *) particion);
-		}else{	
-			int indexParticion = 0;
-			Triad *particion = (Triad*)malloc(sizeof(Triad)*numPixelsXthread);
-			particion[0].fin = numPixelsXthread;
-			for(int y = index; y<  index + numPixelsXthread; y++, indexParticion++){
-				particion[indexParticion]=img->triads[y];
-			}
-			pthread_create(&read_thread[i],NULL,convertToGrayScale,(void *) particion);
-		}
+	//Se setean el inicio y el fin de las particiones
+	img->partition_start = 0;
+	img->partition_end = numPixelsXthread;
+	img->numberPixelsXthread = numPixelsXthread;
+	for(int i = 0; i < number_threads+1; i++){
+		pthread_mutex_init(&mutex_acum, NULL);
 	}
+	for(int i = 1; i < number_threads +1; i++){
+		pthread_create(&threads[i],NULL,convertToGrayScaleHandler,(void *) img);		
+	}
+	
+	
+	
+	for(int i = 0; i < number_threads+1; i++){
+		pthread_join(threads[i],NULL);
+	}
+
+	writeImage(img, img->filePointer);
+
+	return 0;
+}
+
+void *convertToGrayScaleHandler(void *img_o){
+	Image *img = (Image*)img_o;
+	//Seccion critica
+	pthread_mutex_lock(&mutex_acum);	
+	convertToGrayScale(img);
+	img->partition_start = img->partition_start + img->numberPixelsXthread + 1;
+	img->partition_end = img->partition_end + img->numberPixelsXthread;	
+	pthread_mutex_unlock(&mutex_acum);		
+	return NULL;	
+	
 }
 	
 /*Función que lee los datos de la imagen desplazandose sobre ella por los bytes. Guarda los datos
@@ -68,7 +76,7 @@ en la estructura img.
 Entrada: Struct Image, FILE *file_pointer (puntero a la imagen con la que se está trabajando)
 Salida: Void
 */
-void * readImage(void *img_o){
+void *readImage(void *img_o){
 	Image *img = (Image*)img_o;
 	fread(&img->type, 1, 1, img->filePointer); //1
 	fread(&img->type2, 1, 1, img->filePointer); //1
@@ -117,7 +125,6 @@ void * readImage(void *img_o){
 	fread(data,tam_img,1,img->filePointer); //Se extrae la data de la imagen.
     
 	int x;
-	int y;
 	img->triads = (Triad*)malloc(sizeof(Triad)*(img->height*img->height)); //Se asigna memoria para la matriz
 	int count_matrix = 0;
 	int nPixels = img->height * img->width;
@@ -133,28 +140,24 @@ void * readImage(void *img_o){
 		}
     //Se libera memoria de data
     free(data);
-	
 	return NULL;
 }
 /*Función que convierte la matriz de pixeles de acuerdo a la fórmula dada en el enunciado
 Entrada: Struct Image
 Salida: Void
 */
-void *convertToGrayScale(void *triads_o){
-	Triad * triads = (Triad*)triads_o;
-	printf("Soy la hebra %d\n",triads[0].fin);
+void *convertToGrayScale(void *img_o){
+	Image *img = (Image*)img_o;
 	int x;
-	
+	printf("\nComienzo: %i \n Fin: %i \n", img->partition_start, img->partition_end);	
 
-	for(x = 0; x<triads[0].fin;x++){
-		int calculo = triads[x].b*0.11+triads[x].g*0.59+triads[x].r*0.3;
-
-	
-			triads[x].b = calculo;
-			triads[x].g = calculo;
-			triads[x].r = calculo;
-			triads[x].a = 255;
-		}
+	for(x = img->partition_start; x<img->partition_end; x++){
+		int calculo = img->triads[x].b*0.11+img->triads[x].g*0.59+img->triads[x].r*0.3;
+		img->triads[x].b = calculo;
+		img->triads[x].g = calculo;
+		img->triads[x].r = calculo;
+		img->triads[x].a = 255;
+	}
 		//se retorna la particion
 	return NULL;
 
@@ -191,6 +194,31 @@ FILE *openImage(char *file_name){
 
 }
 
+void writeImage(Image *img, FILE *file_pointer){
+	
+	int count_matrix = 0;
+	unsigned char *data = (unsigned char*)malloc(sizeof(unsigned char)*img->tam_img); 
+    int nPixels = img->height * img->width;
+	for(int x=0 ; x  < nPixels; x++){ 
+        data[count_matrix] = img->triads[x].b;//r
+        count_matrix++; 
+        data[count_matrix] = img->triads[x].g;//r 
+        count_matrix++; 
+        data[count_matrix] = img->triads[x].r;//r 
+        count_matrix++; 
+		data[count_matrix] = 255;//r 
+        count_matrix++; 
+    }
+	fseek(file_pointer,0,SEEK_SET);	
+	fseek(file_pointer,img->dataPointer,SEEK_SET); //Se busca el puntero a la data de pixeles
+	for(int x=0; x<count_matrix; x++){
+		fwrite(&data[x], sizeof(unsigned char), 1, file_pointer);
+	}
+
+    free(data); //Se libera memoria de data
+
+
+}
 
 
 
@@ -258,7 +286,7 @@ void writeGrayImage(Image *img, FILE *file_pointer){
 
 
 }
-
+*/
 
 /*Función que cierra un archivo
 Entrada: FILE *file_pointer (puntero a la imagen con la que se está trabajando)
@@ -269,7 +297,7 @@ void closeImage(FILE *file_pointer){
 	fclose(file_pointer);
 }
 
-
+*/
 /*Función que imprime la matriz de pixeles por pantalla. Para uso propio para comprobar
 datos.
 Entrada: Struct Image
@@ -286,7 +314,7 @@ void printPixelMatrix(Image *img){
 }
 
 
-
+*/
 /*Función que transforma la matriz de pixeles en escala de grises, a una matriz binarizada, en donde
 si el valor del pixel es mayor al umbral, se transforma en un pixel blanco, y si es menor al umbral, se transforma
 en un pixel negro. Además, cuenta cuantos pixeles negros tendrá la imagen.
@@ -315,7 +343,7 @@ int binarization(Image *img, int umbral){
 	}
 	return numBlacks;
 }
-
+*/
 /*Función que calcula el porcentaje de pixeles negros que contiene la imagen. Si este porcentaje es mayor al
 umbral dado por el usuario, se considera como NearlyBlack,
 Entrada; Int numOfBlacks (Cantidad de pixeles negros), int numTotal (Cantidad de pixeles totales), int umbralNearlyBlack (umbral dado por el usuario)

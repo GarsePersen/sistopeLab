@@ -5,7 +5,7 @@ typedef struct{
     unsigned char g;
     unsigned char b;
     unsigned char a;
-    unsigned int fin;
+    unsigned int partition_size;
 }Triad;
 //Estructura para la imagen
 typedef struct {
@@ -25,18 +25,23 @@ typedef struct {
     Triad *triads;
     FILE* filePointer;
     int nThreads;
+    int partition_end;
+    int partition_start;
+    int numberPixelsXthread;
 }Image;
 
 //Funciones
-int imageHandler(char *file_name, int umbral, int nearlyBlack, int threads);
+int threadsHandler(char *file_name, int umbral, int nearlyBlack, int threads);
 FILE *openImage(char *file_name);
 void *convertToGrayScale(void* triads);
 void *readImage(void *img);
+void cpy_img(char *nameFile, char *nameFileOut);
+void *convertToGrayScaleHandler(void *img_o);
+void writeImage(Image *img, FILE *file_pointer);
+
 /*
 void printPixelMatrix(Image *img);
 void closeImage(FILE *file_pointer);
-void writeGrayImage(Image *img, FILE *file_pointer);
-void cpy_img(char *nameFile, char *nameFileOut);
 int binarization(Image *img, int umbral);
 int nearlyBlack(int numOfBlacks, int numTotal, int umbralNearlyBlack);
 */

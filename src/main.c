@@ -112,7 +112,7 @@ int main(int argc, char **argv){
     printf("Ingrese el numero de hebras: ");
     scanf("%i",&threads);
     int umbralNearlyBlack = 100;
-    int resultsNearlyBlack = imageHandler("prueba.bmp",umbral,umbralNearlyBlack, threads); //image handler retorna 0 -> no, 1 -> si.
+    int resultsNearlyBlack = threadsHandler("prueba.bmp",umbral,umbralNearlyBlack, threads); //image handler retorna 0 -> no, 1 -> si.
     printf("Se termino imagen, resultNearlyBlack: %i\n", resultsNearlyBlack);
     printf("\n");
     
