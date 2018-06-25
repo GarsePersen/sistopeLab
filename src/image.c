@@ -14,32 +14,66 @@ para mantener un encapsulamiento de estas.
 Entrada: char *file_name (Nombre archivo de entrada), int umbral, int umbralNearlyBlack
 Salida: Entero representando si la imagen es NearlyBlack o no.
 */
-int threadsHandler(char *file_name, int umbral, int umbralNearlyBlack, int number_threads){
-  	Image *img = (Image*)malloc(sizeof(Image));
-    
-    char *fileNameOut = (char*)malloc(sizeof(char)*100); //Se asigna un nombre al archivo de salida.
-    strcpy(fileNameOut,"binarizado-"); //Se guarda el archivo original
-    strcat(fileNameOut,file_name); //Se asigna un identificador al archivo
-    cpy_img(file_name,fileNameOut); //Se copia el archivo
+void* threadsHandler(void* data_o){
+	DataInit *data = (DataInit*)data_o;
+	
+	
+	unsigned char * matrix;
 
-    img->filePointer = openImage(fileNameOut); //Se abre imagen
-	pthread_t *threads = (pthread_t*)malloc(sizeof(pthread_t)*(number_threads+1));
-	
-	
-    img->nThreads = number_threads;	
-	pthread_create(&threads[0],NULL,readImage,(void *) img);
+	if( searchThread(pthread_self(),data->dataThreads,data->threads) ==0){
+		printf("Entre \n");
+		char *fileNameOut = (char*)malloc(sizeof(char)*100); //Se asigna un nombre al archivo de salida.
+		strcpy(fileNameOut,"binarizado-"); //Se guarda el archivo original
+		strcat(fileNameOut,data->file_name); //Se asigna un identificador al archivo
+		cpy_img(data->file_name,fileNameOut); //Se copia el archivo
 
-	pthread_join(threads[0],NULL);     
+		data->img->filePointer = openImage(fileNameOut); //Se abre imagen
+		matrix = readImage(data->img,data->img->filePointer);
+	}
 	
-	
-	int numPixels = img->height * img->width;
-	img->nThreads = number_threads;
+	pthread_barrier_wait(&data->barrier); //Se espera a que lleguen todas las hebras para continuar
+	printf("size: %d",data->img->width);
+	int i;
 
-	int numPixelsXthread = numPixels/number_threads;
-	printf("numPixXThread: %d\n",numPixelsXthread);
-	//Se setean el inicio y el fin de las particiones
-	img->partition_start = 0;
-	img->partition_end = numPixelsXthread;
+	
+
+	//Se espera a la hebra que está leyendo.
+	
+	//Se inicia la escala de grises
+	//SC para el calculo de la porcion de imagen que se 
+	//envia a la escala de grises.
+	
+	pthread_mutex_lock(&data->mutexCalculus); 
+			unsigned int indexthread = searchThread(pthread_self(),data->dataThreads,data->threads);
+			if(data->aux == 0){
+				int numPixels = data->img->height * data->img->width;
+				data->img->numberPixelsXthread = numPixels/data->threads;
+				
+				//Se setean el inicio y el fin de las particiones
+				data->dataThreads[indexthread].start = 0;
+				data->img->partition_start = 0;
+				data->dataThreads[indexthread].end = data->img->numberPixelsXthread;
+				data->img->partition_end = data->img->numberPixelsXthread;
+
+				data->aux = 1;
+				
+			}else{
+				data->dataThreads[indexthread].start = data->img->partition_start + data->img->numberPixelsXthread + 1;
+				data->img->partition_start = data->img->partition_start + data->img->numberPixelsXthread + 1;
+				data->dataThreads[indexthread].end  = data->img->partition_end + data->img->numberPixelsXthread +1;	
+				data->img->partition_end = data->img->partition_end + data->img->numberPixelsXthread +1;	
+			}
+			//ajustarPorcion.
+	pthread_mutex_unlock(&data->mutexCalculus);
+		printf("P` inicio: %d   fin: %d\n",data->dataThreads[indexthread].start,data->dataThreads[indexthread].end);
+
+	convertToGrayScale(data->img,data->dataThreads[indexthread].start,data->dataThreads[indexthread].end);
+
+
+	/*
+
+	
+	
 	img->numberPixelsXthread = numPixelsXthread;
 	for(int i = 0; i < number_threads+1; i++){
 		pthread_mutex_init(&mutex_acum, NULL);
@@ -56,16 +90,27 @@ int threadsHandler(char *file_name, int umbral, int umbralNearlyBlack, int numbe
 
 	writeImage(img, img->filePointer);
 
-	return 0;
+	return 0; */
+}
+
+unsigned int searchThread(pthread_t id, DataThread *threads, int numThread){
+	int x = 0;
+	//printf("x: %d\n",x);
+	for(x ; x<numThread; x++){
+		if(id == threads[x].id){
+			//printf("Lo encontre index: %d\n",x);
+			return x;
+		}
+	}
+
 }
 
 void *convertToGrayScaleHandler(void *img_o){
 	Image *img = (Image*)img_o;
 	//Seccion critica
 	pthread_mutex_lock(&mutex_acum);	
-	convertToGrayScale(img);
-	img->partition_start = img->partition_start + img->numberPixelsXthread + 1;
-	img->partition_end = img->partition_end + img->numberPixelsXthread;	
+	//convertToGrayScale(img);
+	
 	pthread_mutex_unlock(&mutex_acum);		
 	return NULL;	
 	
@@ -76,59 +121,63 @@ en la estructura img.
 Entrada: Struct Image, FILE *file_pointer (puntero a la imagen con la que se está trabajando)
 Salida: Void
 */
-void *readImage(void *img_o){
-	Image *img = (Image*)img_o;
-	fread(&img->type, 1, 1, img->filePointer); //1
-	fread(&img->type2, 1, 1, img->filePointer); //1
-    if((img->type != 'B' ) && (img->type != 'M')){ //Se comprueba que el archivo sea del tipo bmp
-        free(img);
-		printf("No es BMP\n");
-        //return -1;
-    }
-	printf("Es BMP\n");
+/*Función que lee los datos de la imagen desplazandose sobre ella por los bytes. Guarda los datos
+en la estructura img.
+Entrada: Struct Image, FILE *file_pointer (puntero a la imagen con la que se está trabajando)
+Salida: Void
+*/
+unsigned char *readImage(Image *img, FILE *file_pointer){
+	fread(&img->type, 1, 1, file_pointer); //1
+	fread(&img->type2, 1, 1, file_pointer); //1
+	/*if((img->type != 'B' ) && (img->type != 'M')){ //Se comprueba que el archivo sea del tipo bmp
+	    free(img);
+	    return -1;
+	}*/
 
 
-	fread(&img->fileSize, 4, 1, img->filePointer);//5
-	
-	fread(&img->reserved1, 2, 1, img->filePointer);//7
+	fread(&img->fileSize, 4, 1, file_pointer);//5
 
-	fread(&img->reserved2, 2, 1, img->filePointer);//9
-	
-	fread(&img->dataPointer, 4, 1, img->filePointer);//13
+	fread(&img->reserved1, 2, 1, file_pointer);//7
 
+	fread(&img->reserved2, 2, 1, file_pointer);//9
 
-
-	fseek(img->filePointer,4,SEEK_CUR); //4 desplazamientos
-	fread(&img->width, 4, 1, img->filePointer);//18 ->ancho
-	fread(&img->height, 4, 1, img->filePointer);//21 ->Largo
+	fread(&img->dataPointer, 4, 1, file_pointer);//13
 
 
-	
-	fseek(img->filePointer,26,SEEK_SET);
-	fread(&img->planes, 2, 1, img->filePointer);//Planos
 
-	fseek(img->filePointer,28,SEEK_SET);    
-	fread(&img->bitPerPixel, 2, 1, img->filePointer);//bits x pixel
+	fseek(file_pointer,4,SEEK_CUR); //4 desplazamientos
+	fread(&img->width, 4, 1, file_pointer);//18 ->ancho
+	fread(&img->height, 4, 1, file_pointer);//21 ->Largo
+
+
+
+	fseek(file_pointer,26,SEEK_SET);
+	fread(&img->planes, 2, 1, file_pointer);//Planos
+
+	fseek(file_pointer,28,SEEK_SET);
+	fread(&img->bitPerPixel, 2, 1, file_pointer);//bits x pixel
 	int tam_img = 0;
-	fseek(img->filePointer,34,SEEK_SET);
-	fread(&tam_img,4,1,img->filePointer);
-    img->tam_img = tam_img;
-	fseek(img->filePointer,30,SEEK_SET);
-	fread(&img->isCompressed,4,1,img->filePointer);
+	fseek(file_pointer,34,SEEK_SET);
+	fread(&tam_img,4,1,file_pointer);
+	img->tam_img = tam_img;
+	fseek(file_pointer,30,SEEK_SET);
+	fread(&img->isCompressed,4,1,file_pointer);
 	int tablaCol;
-	fseek(img->filePointer,46,SEEK_SET);
-	fread(&tablaCol,4,1,img->filePointer);
-	
-	fseek(img->filePointer,img->dataPointer,SEEK_SET); //Se avanza tantos como el data pointer desde el inicio.
-	
-	unsigned char *data = (unsigned char*)malloc(sizeof(char)*tam_img);
-	fread(data,tam_img,1,img->filePointer); //Se extrae la data de la imagen.
-    
+	fseek(file_pointer,46,SEEK_SET);
+	fread(&tablaCol,4,1,file_pointer);
+
+	fseek(file_pointer,img->dataPointer,SEEK_SET); //Se avanza tantos como el data pointer desde el inicio.
+
+	unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char *)*tam_img);
+	fread(data,tam_img,1,file_pointer); //Se extrae la data de la imagen.
+
 	int x;
-	img->triads = (Triad*)malloc(sizeof(Triad)*(img->height*img->height)); //Se asigna memoria para la matriz
+	int y;
+	
+	img->triads = (Triad**)malloc(sizeof(Triad*)*(img->height*img->width)); //Se asigna memoria para la matriz
+	
 	int count_matrix = 0;
-	int nPixels = img->height * img->width;
-	for(x=0 ; x  < nPixels; x++){ //Se inicia la extracción de datos
+	for(x=0; x<img->height*img->width; x++){ //Se inicia la extracción de datos
 			img->triads[x].b = data[count_matrix];//r
 			count_matrix++;
 			img->triads[x].g = data[count_matrix];//r
@@ -136,22 +185,24 @@ void *readImage(void *img_o){
 			img->triads[x].r = data[count_matrix];//r
 			count_matrix++;
 			img->triads[x].a = data[count_matrix];//r
-			count_matrix++;
-		}
-    //Se libera memoria de data
-    free(data);
-	return NULL;
-}
-/*Función que convierte la matriz de pixeles de acuerdo a la fórmula dada en el enunciado
+			count_matrix++;	
+	}
+	
+
+	//Se libera memoria de data
+	//free(data);
+
+	return data;
+
+}/*Función que convierte la matriz de pixeles de acuerdo a la fórmula dada en el enunciado
 Entrada: Struct Image
 Salida: Void
 */
-void *convertToGrayScale(void *img_o){
-	Image *img = (Image*)img_o;
+void *convertToGrayScale(Image *img, unsigned int start, unsigned int end){
 	int x;
-	printf("\nComienzo: %i \n Fin: %i \n", img->partition_start, img->partition_end);	
+	printf("\nComienzo: %i \n Fin: %i \n", start, end);	
 
-	for(x = img->partition_start; x<img->partition_end; x++){
+	for(x = start; x<end; x++){
 		int calculo = img->triads[x].b*0.11+img->triads[x].g*0.59+img->triads[x].r*0.3;
 		img->triads[x].b = calculo;
 		img->triads[x].g = calculo;

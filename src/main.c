@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "image.h"
+#include <pthread.h>
 
 	
 
@@ -112,9 +113,30 @@ int main(int argc, char **argv){
     printf("Ingrese el numero de hebras: ");
     scanf("%i",&threads);
     int umbralNearlyBlack = 100;
-    int resultsNearlyBlack = threadsHandler("prueba.bmp",umbral,umbralNearlyBlack, threads); //image handler retorna 0 -> no, 1 -> si.
-    printf("Se termino imagen, resultNearlyBlack: %i\n", resultsNearlyBlack);
-    printf("\n");
+    DataInit *data = (DataInit*)malloc(sizeof(DataInit));
+    data->file_name = "prueba.bmp";
+    data->umbral = umbral;
+    data->nearlyBlack = umbralNearlyBlack;
+    data->threads = threads;
+    pthread_mutex_init(&data->mutexInit,NULL);
+    pthread_mutex_init(&data->mutexCalculus,NULL);
+    pthread_barrier_init(&data->barrier,NULL,data->threads);
+    data->aux =0;
+    Image *img = (Image*)malloc(sizeof(Image));
+    data->img = img;
+    
+    int x;
+    DataThread* dataThreads = (DataThread*)malloc(sizeof(DataThread)*threads);
+    data->dataThreads = dataThreads;
+    for(x=0;x<threads;x++){
+        pthread_create(&dataThreads[x].id,NULL,threadsHandler,(void*)data);
+    }
+    for(x=0;x<threads;x++){
+        pthread_join(data->dataThreads[x].id,NULL);
+    }
+    writeImage(data->img,data->img->filePointer);
+
+
     
 	return 0;
 }

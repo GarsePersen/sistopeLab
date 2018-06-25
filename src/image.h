@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <pthread.h>
+
 //Estructura para almacenar la matriz de pixeles
 typedef struct{
     unsigned char r;
@@ -30,15 +32,37 @@ typedef struct {
     int numberPixelsXthread;
 }Image;
 
+
+
+typedef struct{
+    pthread_t id;
+    unsigned char* pixels;
+    unsigned int start;
+    unsigned int end;
+}DataThread;
+
+typedef struct{
+    char *file_name;
+    int umbral;
+    int nearlyBlack;
+    int threads;
+    pthread_mutex_t mutexInit;
+    pthread_mutex_t mutexCalculus;
+    pthread_barrier_t barrier;
+    int aux;
+    Image* img;
+    DataThread* dataThreads;
+}DataInit;
+
 //Funciones
-int threadsHandler(char *file_name, int umbral, int nearlyBlack, int threads);
+void* threadsHandler(void* data_o);
 FILE *openImage(char *file_name);
-void *convertToGrayScale(void* triads);
-void *readImage(void *img);
+void *convertToGrayScale(Image *img, unsigned int start, unsigned int end);
+unsigned char *readImage(Image *img, FILE *file_pointer);
 void cpy_img(char *nameFile, char *nameFileOut);
 void *convertToGrayScaleHandler(void *img_o);
 void writeImage(Image *img, FILE *file_pointer);
-
+unsigned int searchThread(pthread_t id, DataThread *threads, int numThread);
 /*
 void printPixelMatrix(Image *img);
 void closeImage(FILE *file_pointer);
