@@ -118,8 +118,11 @@ int main(int argc, char **argv){
     data->umbral = umbral;
     data->nearlyBlack = umbralNearlyBlack;
     data->threads = threads;
+	
+	//Inicializacion de mutex y barrera
     pthread_mutex_init(&data->mutexInit,NULL);
     pthread_mutex_init(&data->mutexCalculus,NULL);
+    pthread_mutex_init(&data->mutexNearlyBlack,NULL);
     pthread_barrier_init(&data->barrier,NULL,data->threads);
     data->aux =0;
     Image *img = (Image*)malloc(sizeof(Image));

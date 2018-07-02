@@ -36,7 +36,6 @@ typedef struct {
 
 typedef struct{
     pthread_t id;
-    unsigned char* pixels;
     unsigned int start;
     unsigned int end;
 }DataThread;
@@ -46,7 +45,9 @@ typedef struct{
     int umbral;
     int nearlyBlack;
     int threads;
+	int nearlyBlackResult;
     pthread_mutex_t mutexInit;
+	pthread_mutex_t mutexNearlyBlack;
     pthread_mutex_t mutexCalculus;
     pthread_barrier_t barrier;
     int aux;
@@ -58,14 +59,13 @@ typedef struct{
 void* threadsHandler(void* data_o);
 FILE *openImage(char *file_name);
 void *convertToGrayScale(Image *img, unsigned int start, unsigned int end);
-unsigned char *readImage(Image *img, FILE *file_pointer);
+int readImage(Image *img, FILE *file_pointer);
 void cpy_img(char *nameFile, char *nameFileOut);
-void *convertToGrayScaleHandler(void *img_o);
 void writeImage(Image *img, FILE *file_pointer);
 unsigned int searchThread(pthread_t id, DataThread *threads, int numThread);
+int binarization(Image *img, unsigned int start, unsigned int end, int umbral);
 /*
 void printPixelMatrix(Image *img);
 void closeImage(FILE *file_pointer);
-int binarization(Image *img, int umbral);
 int nearlyBlack(int numOfBlacks, int numTotal, int umbralNearlyBlack);
 */

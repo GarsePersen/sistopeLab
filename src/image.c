@@ -16,11 +16,10 @@ Salida: Entero representando si la imagen es NearlyBlack o no.
 */
 void* threadsHandler(void* data_o){
 	DataInit *data = (DataInit*)data_o;
-	
-	
-	unsigned char * matrix;
 
-	if( searchThread(pthread_self(),data->dataThreads,data->threads) ==0){
+	int readReturn;
+
+	if( searchThread(pthread_self(),data->dataThreads,data->threads) == 0){
 		printf("Entre \n");
 		char *fileNameOut = (char*)malloc(sizeof(char)*100); //Se asigna un nombre al archivo de salida.
 		strcpy(fileNameOut,"binarizado-"); //Se guarda el archivo original
@@ -28,25 +27,23 @@ void* threadsHandler(void* data_o){
 		cpy_img(data->file_name,fileNameOut); //Se copia el archivo
 
 		data->img->filePointer = openImage(fileNameOut); //Se abre imagen
-		matrix = readImage(data->img,data->img->filePointer);
+		readReturn = readImage(data->img,data->img->filePointer);
 	}
 	
 	pthread_barrier_wait(&data->barrier); //Se espera a que lleguen todas las hebras para continuar
-	printf("size: %d",data->img->width);
-	int i;
-
 	
-
+	//Si readReturn es -1, la imagen no es bmp
+	if(readReturn == -1){
+		return NULL;
+	}
 	//Se espera a la hebra que está leyendo.
-	
 	//Se inicia la escala de grises
 	//SC para el calculo de la porcion de imagen que se 
 	//envia a la escala de grises.
-	
 	pthread_mutex_lock(&data->mutexCalculus); 
 			unsigned int indexthread = searchThread(pthread_self(),data->dataThreads,data->threads);
 			if(data->aux == 0){
-				int numPixels = data->img->height * data->img->width;
+				int numPixels = data->img->height *data->img->width;
 				data->img->numberPixelsXthread = numPixels/data->threads;
 				
 				//Se setean el inicio y el fin de las particiones
@@ -54,22 +51,36 @@ void* threadsHandler(void* data_o){
 				data->img->partition_start = 0;
 				data->dataThreads[indexthread].end = data->img->numberPixelsXthread;
 				data->img->partition_end = data->img->numberPixelsXthread;
-
-				data->aux = 1;
-				
+				data->nearlyBlackResult = 0;
+				data->aux++;
 			}else{
-				data->dataThreads[indexthread].start = data->img->partition_start + data->img->numberPixelsXthread + 1;
-				data->img->partition_start = data->img->partition_start + data->img->numberPixelsXthread + 1;
-				data->dataThreads[indexthread].end  = data->img->partition_end + data->img->numberPixelsXthread +1;	
-				data->img->partition_end = data->img->partition_end + data->img->numberPixelsXthread +1;	
+				if(data->aux == data->threads - 1){
+					data->dataThreads[indexthread].start = data->img->partition_start + data->img->numberPixelsXthread + 1;
+					data->img->partition_start = data->img->partition_start + data->img->numberPixelsXthread + 1;
+					data->dataThreads[indexthread].end  = data->img->partition_end + data->img->numberPixelsXthread + 1;	
+					data->img->partition_end = data->img->partition_end + data->img->numberPixelsXthread + 1;
+					data->dataThreads[indexthread].end = data->dataThreads[indexthread].end + ((data->img->height*data->img->width)-data->dataThreads[indexthread].end);
+					data->img->partition_end = data->img->partition_end + ((data->img->height*data->img->width)-data->img->partition_end);
+					printf("\n %i %i \n\n", data->img->partition_end, data->img->width*data->img->height);
+				} else {						
+					data->dataThreads[indexthread].start = data->img->partition_start + data->img->numberPixelsXthread + 1;
+					data->img->partition_start = data->img->partition_start + data->img->numberPixelsXthread + 1;
+					data->dataThreads[indexthread].end  = data->img->partition_end + data->img->numberPixelsXthread + 1;	
+					data->img->partition_end = data->img->partition_end + data->img->numberPixelsXthread +1;	
+					data->aux++;
+				}
 			}
-			//ajustarPorcion.
 	pthread_mutex_unlock(&data->mutexCalculus);
-		printf("P` inicio: %d   fin: %d\n",data->dataThreads[indexthread].start,data->dataThreads[indexthread].end);
 
+	//printf("Thread %lu inicio: %d fin: %d\n", (unsigned long)pthread_self(), data->dataThreads[indexthread].start, data->dataThreads[indexthread].end);
 	convertToGrayScale(data->img,data->dataThreads[indexthread].start,data->dataThreads[indexthread].end);
-
-
+	int result = binarization(data->img,data->dataThreads[indexthread].start,data->dataThreads[indexthread].end, data->umbral);
+	pthread_mutex_lock(&data->mutexNearlyBlack); 
+		//Seccion critica
+		data->nearlyBlackResult = data->nearlyBlackResult + result;
+	pthread_mutex_unlock(&data->mutexNearlyBlack);
+	printf("R: %i\n", data->nearlyBlackResult);
+	
 	/*
 
 	
@@ -91,48 +102,34 @@ void* threadsHandler(void* data_o){
 	writeImage(img, img->filePointer);
 
 	return 0; */
+	return NULL;
 }
 
 unsigned int searchThread(pthread_t id, DataThread *threads, int numThread){
-	int x = 0;
+	int x;
 	//printf("x: %d\n",x);
-	for(x ; x<numThread; x++){
+	for(x = 0; x<numThread; x++){
 		if(id == threads[x].id){
 			//printf("Lo encontre index: %d\n",x);
 			return x;
 		}
 	}
-
+	return -1;
 }
 
-void *convertToGrayScaleHandler(void *img_o){
-	Image *img = (Image*)img_o;
-	//Seccion critica
-	pthread_mutex_lock(&mutex_acum);	
-	//convertToGrayScale(img);
-	
-	pthread_mutex_unlock(&mutex_acum);		
-	return NULL;	
-	
-}
 	
 /*Función que lee los datos de la imagen desplazandose sobre ella por los bytes. Guarda los datos
 en la estructura img.
 Entrada: Struct Image, FILE *file_pointer (puntero a la imagen con la que se está trabajando)
 Salida: Void
 */
-/*Función que lee los datos de la imagen desplazandose sobre ella por los bytes. Guarda los datos
-en la estructura img.
-Entrada: Struct Image, FILE *file_pointer (puntero a la imagen con la que se está trabajando)
-Salida: Void
-*/
-unsigned char *readImage(Image *img, FILE *file_pointer){
+int readImage(Image *img, FILE *file_pointer){
 	fread(&img->type, 1, 1, file_pointer); //1
 	fread(&img->type2, 1, 1, file_pointer); //1
-	/*if((img->type != 'B' ) && (img->type != 'M')){ //Se comprueba que el archivo sea del tipo bmp
+	if((img->type != 'B' ) && (img->type != 'M')){ //Se comprueba que el archivo sea del tipo bmp
 	    free(img);
 	    return -1;
-	}*/
+	}
 
 
 	fread(&img->fileSize, 4, 1, file_pointer);//5
@@ -157,12 +154,14 @@ unsigned char *readImage(Image *img, FILE *file_pointer){
 	fseek(file_pointer,28,SEEK_SET);
 	fread(&img->bitPerPixel, 2, 1, file_pointer);//bits x pixel
 	int tam_img = 0;
+	int x;
+	int tablaCol;
 	fseek(file_pointer,34,SEEK_SET);
 	fread(&tam_img,4,1,file_pointer);
 	img->tam_img = tam_img;
 	fseek(file_pointer,30,SEEK_SET);
 	fread(&img->isCompressed,4,1,file_pointer);
-	int tablaCol;
+	
 	fseek(file_pointer,46,SEEK_SET);
 	fread(&tablaCol,4,1,file_pointer);
 
@@ -171,10 +170,8 @@ unsigned char *readImage(Image *img, FILE *file_pointer){
 	unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char *)*tam_img);
 	fread(data,tam_img,1,file_pointer); //Se extrae la data de la imagen.
 
-	int x;
-	int y;
-	
-	img->triads = (Triad**)malloc(sizeof(Triad*)*(img->height*img->width)); //Se asigna memoria para la matriz
+	//Se asigna memoria para la matriz
+	img->triads = (Triad*)malloc(sizeof(Triad*)*(img->height*img->width)); 
 	
 	int count_matrix = 0;
 	for(x=0; x<img->height*img->width; x++){ //Se inicia la extracción de datos
@@ -192,7 +189,7 @@ unsigned char *readImage(Image *img, FILE *file_pointer){
 	//Se libera memoria de data
 	//free(data);
 
-	return data;
+	return 0;
 
 }/*Función que convierte la matriz de pixeles de acuerdo a la fórmula dada en el enunciado
 Entrada: Struct Image
@@ -200,8 +197,7 @@ Salida: Void
 */
 void *convertToGrayScale(Image *img, unsigned int start, unsigned int end){
 	int x;
-	printf("\nComienzo: %i \n Fin: %i \n", start, end);	
-
+	
 	for(x = start; x<end; x++){
 		int calculo = img->triads[x].b*0.11+img->triads[x].g*0.59+img->triads[x].r*0.3;
 		img->triads[x].b = calculo;
@@ -209,10 +205,36 @@ void *convertToGrayScale(Image *img, unsigned int start, unsigned int end){
 		img->triads[x].r = calculo;
 		img->triads[x].a = 255;
 	}
-		//se retorna la particion
 	return NULL;
 
 }
+
+
+/*Función que transforma la matriz de pixeles en escala de grises, a una matriz binarizada, en donde
+si el valor del pixel es mayor al umbral, se transforma en un pixel blanco, y si es menor al umbral, se transforma
+en un pixel negro. Además, cuenta cuantos pixeles negros tendrá la imagen.
+Entrada: Struct Image, Int umbral
+Salida: Cantidad de pixeles negros
+*/
+int binarization(Image *img, unsigned int start, unsigned int end, int umbral){	
+	int x;
+	int numBlacks = 0;
+	for(x = start ; x<end; x++){
+		if(img->triads[x].r > umbral ){
+            img->triads[x].r = 255;
+            img->triads[x].g = 255;
+            img->triads[x].b = 255;
+		}else{
+            img->triads[x].r = 0;
+            img->triads[x].g = 0;
+            img->triads[x].b = 0;
+            numBlacks++;
+        }
+	}
+	
+	return numBlacks;
+}
+
 /*Función que copia la imagen original para no modificarla y trabajar en una imagen separada.
 Entrada: char *nameFile (nombre del archivo de entrada), char *nameFileOut (Nombre del archivo de salida)
 Salida: Void
@@ -270,6 +292,7 @@ void writeImage(Image *img, FILE *file_pointer){
 
 
 }
+
 
 
 
@@ -366,35 +389,7 @@ void printPixelMatrix(Image *img){
 
 
 */
-/*Función que transforma la matriz de pixeles en escala de grises, a una matriz binarizada, en donde
-si el valor del pixel es mayor al umbral, se transforma en un pixel blanco, y si es menor al umbral, se transforma
-en un pixel negro. Además, cuenta cuantos pixeles negros tendrá la imagen.
-Entrada: Struct Image, Int umbral
-Salida: Cantidad de pixeles negros
-*/
-/*
-int binarization(Image *img, int umbral){
-	
-	int x;
-	int y;
-	int numBlacks = 0;
-	for(x =0 ; x<img->height; x++){
-		for(y = 0; y<img->width; y++){
-			if(img->triads[x][y].r > umbral ){
-                img->triads[x][y].r = 255;
-                img->triads[x][y].g = 255;
-                img->triads[x][y].b = 255;
-			}else{
-                img->triads[x][y].r = 0;
-                img->triads[x][y].g = 0;
-                img->triads[x][y].b = 0;
-                numBlacks++;
-            }
-		}
-	}
-	return numBlacks;
-}
-*/
+
 /*Función que calcula el porcentaje de pixeles negros que contiene la imagen. Si este porcentaje es mayor al
 umbral dado por el usuario, se considera como NearlyBlack,
 Entrada; Int numOfBlacks (Cantidad de pixeles negros), int numTotal (Cantidad de pixeles totales), int umbralNearlyBlack (umbral dado por el usuario)
