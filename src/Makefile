@@ -1,13 +1,13 @@
-FLAGS= -g -Wall
+FLAGS= -g -pthread 
 
 all: lab
 
 lab: main.o image.o
-	gcc $(FLAGS) image.o main.o -g -o lab
+	gcc $(FLAGS) image.o main.o -g -o lab  
 
 image.o: image.h image.c
-	gcc $(FLAGS) -c image.c -o image.o
+	gcc $(FLAGS)-c image.c -o image.o 
 
 clean:
-	rm -f *.o *.swp lab.exe lab
+	rm -f .*swp *.o .*swo .*swn  *.swo *.swn *.swp lab.exe binarizado-*.bmp lab
 
