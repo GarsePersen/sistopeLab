@@ -1,13 +1,18 @@
+PACKAGE = /usr/local/u++-7.0.0
+include ${PACKAGE}/CONFIG
+
+CXX = ${INSTALLBINDIR}/${UPP}
 FLAGS= -g -Wall
 
-all: lab
 
-lab: main.o image.o
-	gcc $(FLAGS) image.o main.o -g -o lab
+all: clear lab
 
-image.o: image.h image.c
-	gcc $(FLAGS) -c image.c -o image.o
+lab:
+	u++ $(FLAGS) Main.cc -o lab
 
+
+clear:
+	clear
 clean:
 	rm -f *.o *.swp lab.exe lab
 
