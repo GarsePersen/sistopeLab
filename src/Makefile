@@ -5,7 +5,8 @@ CXX = ${INSTALLBINDIR}/${UPP}
 FLAGS= -g -Wall
 
 
-all: clear lab
+all: clear clean lab
+
 
 lab:
 	u++ $(FLAGS) Main.cc -o lab
