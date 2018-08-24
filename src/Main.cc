@@ -1,14 +1,17 @@
 #include <iostream>
-#include "Fibonacci.cc"
+#include "Monitor.cc"
 using namespace std;
 
 
 int main()
 {
-    fibonacci f1, f2;
-    for (int i = 1; i <= 10; i++)
-    {
-        cout << f1.next() << " " << f2.next() << endl;
-    }
+    UpDownCounter a(0), b(2), c;
+    cout << a.up() << endl;
+    cout << a.up() << endl;
+    cout << a.up() << endl;
+    cout << b.down() << endl;
+    cout << b.down() << endl;
+    cout << b.down() << endl;
+
     return 0;
 }
