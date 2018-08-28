@@ -8,7 +8,6 @@
 #include <fcntl.h>
 #include <pthread.h>
 
-pthread_mutex_t mutex_acum;
 /*Función que maneja las imagenes. Se encarga de llamar a las funciones que abren, leen y cierran los archivos
 para mantener un encapsulamiento de estas.
 Entrada: char *file_name (Nombre archivo de entrada), int umbral, int umbralNearlyBlack
