@@ -1,15 +1,19 @@
 #include <iostream>
 #include "Monitor.cc"
 #include <pthread.h>
+#include <sstream>
+#include <stdlib.h>
+#include <stdio.h>
+
 using namespace std;
 
-#define NUM_THREADS 20
+#define NUM_THREADS 2
 void* read(void* x);
 void* gray(void *arg);
 void* bin(void * arg);
 void* nearly(void * arg);
 void* write(void * arg);
-
+void cpy_img(string nameFile, string nameFileOut);
 BoundedBuffer buffer;
 
 
@@ -24,17 +28,13 @@ int main()
     pthread_t threads_nearlyB[NUM_THREADS];
     pthread_t threads_write[NUM_THREADS];
     
-    //buffer.insert(2);
-    //cout<<buffer.query() <<endl;
-    //cout << a.query() << endl;
-    //cout << b.insert(2)<<endl;
     int rc;
     
     for(int i = 0; i<NUM_THREADS; i++){
-        pthread_create(&threads_read[i], NULL, &read, NULL);
+        pthread_create(&threads_read[i], NULL, &read, (void*) i+1);
     }
     for(int i = 0; i<NUM_THREADS; i++){
-        pthread_create(&threads_bin[i], NULL, &gray, NULL);
+        pthread_create(&threads_bin[i], NULL, &gray, (void*) i);
     }
     for(int i = 0; i<NUM_THREADS; i++){
         pthread_create(&threads_gray[i], NULL, &bin, (void *)i);
@@ -68,12 +68,29 @@ int main()
 
 
 void* read(void* x){
+    //Crear nombre de imagen
+    stringstream strstream;
+    stringstream ss;
+    string nImagen;
+    strstream << (long)x;
+    strstream >> nImagen;
+    ss<<"image_"<<nImagen;
+    string nombreImagen = ss.str();
+    nombreImagen=nombreImagen+".bmp";
+    cout<<"Estoy leyendo "<<nombreImagen<<endl;
+    
+    //Copiar imagen
+    string fileNameOut="binarizado-";
+	fileNameOut=fileNameOut+nombreImagen; 
+	cpy_img(nombreImagen,fileNameOut); 
+
+	//data->img->filePointer = openImage(fileNameOut); //Se abre imagen
+	//readImage(data->img,data->img->filePointer);
     buffer.insert((long)x,0);
-    cout<<"Estoy Termine de leer"<<endl;
 }
 
 void* gray(void *arg){
-    int a = buffer.remove(0);
+    int a = buffer.remove((long)0);
     cout<<"Estoy tomando el valor y hago GRAY=> "<< a <<endl;
     buffer.insert((long)a,1);
 }
@@ -91,4 +108,11 @@ void* nearly(void * arg){
 void* write(void * arg){
     int r = buffer.remove(3);
     cout<<"Estoy removiendo el valor HAGO WRITE=> "<< r <<endl;
+}
+
+void cpy_img(string nameFile, string nameFileOut){
+    string command="cp ";
+    string cpy_nameFile = nameFile;
+    command=command+cpy_nameFile+" ./"+nameFileOut; // cp nameFile
+    system(command.c_str());
 }

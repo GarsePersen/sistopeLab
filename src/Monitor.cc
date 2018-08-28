@@ -1,4 +1,6 @@
 #include <uC++.h>
+using namespace std;
+
 _Monitor
     BoundedBuffer {
         uCondition full_bin, empty_bin;
@@ -21,7 +23,6 @@ _Monitor
     front_nearly(0), back_nearly(0), count_nearly(0),front_write(0), back_write(0), count_write(0) {}
     _Nomutex 
         void insert(int elem, int type) {
-            
 
             switch(type){
                 case 0:
