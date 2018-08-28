@@ -4,17 +4,23 @@
 #include <sstream>
 #include <stdlib.h>
 #include <stdio.h>
+#include <cstdlib>
+#include "image.h"
 
 using namespace std;
 
 #define NUM_THREADS 2
+void readImage(FILE *file_pointer);
 void* read(void* x);
 void* gray(void *arg);
 void* bin(void * arg);
 void* nearly(void * arg);
 void* write(void * arg);
 void cpy_img(string nameFile, string nameFileOut);
-BoundedBuffer buffer;
+BoundedBuffer buffer_gray;
+BoundedBuffer buffer_bin;
+BoundedBuffer buffer_nearlyB;
+BoundedBuffer buffer_write;
 
 
 
@@ -67,6 +73,16 @@ int main()
 }
 
 
+FILE *openImage(char *file_name){
+	FILE *file_pointer = fopen(file_name, "r+");
+    //Se comprueba que la imagen exista
+    if ((file_pointer == NULL)){
+        return NULL;
+    }
+    return file_pointer;
+	
+
+}
 void* read(void* x){
     //Crear nombre de imagen
     stringstream strstream;
@@ -84,29 +100,32 @@ void* read(void* x){
 	fileNameOut=fileNameOut+nombreImagen; 
 	cpy_img(nombreImagen,fileNameOut); 
 
-	//data->img->filePointer = openImage(fileNameOut); //Se abre imagen
-	//readImage(data->img,data->img->filePointer);
-    buffer.insert((long)x,0);
+	//data.img.filePointer = openImage(fileNameOut); //Se abre imagen
+	//readImage(data.img,data.img.filePointer);
+    FILE *imagePtr = openImage(nombreImagen);
+    readImage(imagePtr);
+    buffer_gray.insert((long)x);
 }
 
+
 void* gray(void *arg){
-    int a = buffer.remove((long)0);
+    int a = buffer_gray.remove();
     cout<<"Estoy tomando el valor y hago GRAY=> "<< a <<endl;
-    buffer.insert((long)a,1);
+    buffer_bin.insert((long)a);
 }
 
 void* bin(void * arg){
-    int r = buffer.remove(1);
+    int r = buffer_bin.remove();
     cout<<"Estoy removiendo el valor HAGO BIN=> "<< r <<endl;
-    buffer.insert((long)r,2);
+    buffer_nearlyB.insert((long)r);
 }
 void* nearly(void * arg){
-    int r = buffer.remove(2);
+    int r = buffer_nearlyB.remove();
     cout<<"Estoy removiendo el valor HAGO NEARLY=> "<< r <<endl;
-    buffer.insert((long)r,3);
+    buffer_write.insert((long)r);
 }
 void* write(void * arg){
-    int r = buffer.remove(3);
+    int r = buffer_write.remove();
     cout<<"Estoy removiendo el valor HAGO WRITE=> "<< r <<endl;
 }
 
@@ -115,4 +134,82 @@ void cpy_img(string nameFile, string nameFileOut){
     string cpy_nameFile = nameFile;
     command=command+cpy_nameFile+" ./"+nameFileOut; // cp nameFile
     system(command.c_str());
+}
+
+/*Función que lee los datos de la imagen desplazandose sobre ella por los bytes. Guarda los datos
+en la estructura img.
+Entrada: Struct Image, FILE *file_pointer (puntero a la imagen con la que se está trabajando)
+Salida: Void
+*/
+/*Función que lee los datos de la imagen desplazandose sobre ella por los bytes. Guarda los datos
+en la estructura img.
+Entrada: Struct Image, FILE *file_pointer (puntero a la imagen con la que se está trabajando)
+Salida: Void
+*/
+void readImage(FILE *file_pointer){
+    cout <<"Lei " <<endl;
+    Image img = new Image();
+	fread(img.type, 1, 1, file_pointer); //1
+	fread(img.type2, 1, 1, file_pointer); //1
+	/*if((img.type != 'B' ) && (img.type != 'M')){ //Se comprueba que el archivo sea del tipo bmp
+	    free(img);
+	    return -1;
+	}*/
+
+
+	fread(img.fileSize, 4, 1, file_pointer);//5
+
+	fread(img.reserved1, 2, 1, file_pointer);//7
+
+	fread(img.reserved2, 2, 1, file_pointer);//9
+
+	fread(img.dataPointer, 4, 1, file_pointer);//13
+
+
+
+	fseek(file_pointer,4,SEEK_CUR); //4 desplazamientos
+	fread(img.width, 4, 1, file_pointer);//18 .ancho
+	fread(img.height, 4, 1, file_pointer);//21 .Largo
+
+
+
+	fseek(file_pointer,26,SEEK_SET);
+	fread(img.planes, 2, 1, file_pointer);//Planos
+
+	fseek(file_pointer,28,SEEK_SET);
+	fread(img.bitPerPixel, 2, 1, file_pointer);//bits x pixel
+	int tam_img = 0;
+	fseek(file_pointer,34,SEEK_SET);
+	fread(&tam_img,4,1,file_pointer);
+	img.tam_img = tam_img;
+	fseek(file_pointer,30,SEEK_SET);
+	//fread(img.isCompressed,4,1,file_pointer);
+	int tablaCol;
+	fseek(file_pointer,46,SEEK_SET);
+	fread(&tablaCol,4,1,file_pointer);
+
+	fseek(file_pointer,img.dataPointer,SEEK_SET); //Se avanza tantos como el data pointer desde el inicio.
+
+	unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char *)*tam_img);
+	fread(data,tam_img,1,file_pointer); //Se extrae la data de la imagen.
+
+	int x;
+	
+	img.triads = (Triad**)malloc(sizeof(Triad*)*(img.height*img.width)); //Se asigna memoria para la matriz
+	
+	int count_matrix = 0;
+	for(x=0; x<img.height*img.width; x++){ //Se inicia la extracción de datos
+			img.triads[x].b = data[count_matrix];//r
+			count_matrix++;
+			img.triads[x].g = data[count_matrix];//r
+			count_matrix++;
+			img.triads[x].r = data[count_matrix];//r
+			count_matrix++;
+			img.triads[x].a = data[count_matrix];//r
+			count_matrix++;	
+	}
+	
+
+	//Se libera memoria de data
+	free(data);
 }

@@ -14,5 +14,5 @@ lab:
 clear:
 	clear
 clean:
-	rm -f *.o *.swp lab.exe lab
+	rm -f *.o *.swp binarizado-*.bmp lab.exe lab
 
