@@ -1,13 +1,4 @@
-
-
-class Triad{
-    public:
-        unsigned char r;
-        unsigned char g;
-        unsigned char b;
-        unsigned char a;
-        unsigned int partition_size;
-}
+#include <vector>
 
 class Image{
     public:
@@ -24,11 +15,21 @@ class Image{
         int tam_img;
         int bitPerPixel;
         int isCompressed;
-        Triad *triads;
+        vector<Triads> triads;
         FILE* filePointer;
         int nThreads;
         int partition_end;
         int partition_start;
         int numberPixelsXthread;
         int numberBlacks;
-}
+};
+
+
+class Triad{
+    public:
+        unsigned char r;
+        unsigned char g;
+        unsigned char b;
+        unsigned char a;
+        unsigned int partition_size;
+};
