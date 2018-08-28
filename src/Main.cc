@@ -12,11 +12,14 @@ BoundedBuffer buffer;
 int main()
 {
     
-    pthread_t threads_insert[NUM_THREADS];
-    pthread_t threads_query[NUM_THREADS];
-    pthread_t threads_remove[NUM_THREADS];
-    buffer.insert(2);
-    cout<<buffer.query() <<endl;
+    pthread_t threads_read[NUM_THREADS];
+    pthread_t threads_bin[NUM_THREADS];
+    pthread_t threads_gray[NUM_THREADS];
+    pthread_t threads_nearlyB[NUM_THREADS];
+    pthread_t threads_write[NUM_THREADS];
+    
+    //buffer.insert(2);
+    //cout<<buffer.query() <<endl;
     //cout << a.query() << endl;
     //cout << b.insert(2)<<endl;
     int rc;

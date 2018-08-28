@@ -6,10 +6,6 @@ FLAGS= -g -Wall
 
 
 all: clear clean lab
-<<<<<<< HEAD
-
-=======
->>>>>>> 090241f69313224b3560eb8eff579fe41ef4c65f
 
 lab:
 	u++ $(FLAGS) Main.cc -o lab
