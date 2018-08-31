@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define NUM_THREADS 10
+#define NUM_THREADS 60
 void readImage(FILE *file_pointer, string fileName);
 void* read(void* x);
 void* gray(void *arg);
@@ -111,25 +111,20 @@ void* gray(void *arg){
     Image img = buffer_gray.remove();
     int count_matrix = 0;
     FILE *imagePtr = openImage(img.fileName);
-    unsigned char *data = (unsigned char*)malloc(sizeof(unsigned char)*img.tam_img); 
+    
     int nPixels = img.height * img.width;
-	for(int x=0 ; x  < nPixels; x++){ 
-        data[count_matrix] = img.triadas[x]->b;//r
-        count_matrix++; 
-        data[count_matrix] = img.triadas[x]->g;//r 
-        count_matrix++; 
-        data[count_matrix] = img.triadas[x]->r;//r 
-        count_matrix++; 
-		data[count_matrix] = 255;//r 
-        count_matrix++; 
-    }
+    unsigned char alpha = 255;
 	fseek(imagePtr,0,SEEK_SET);	
 	fseek(imagePtr,img.dataPointer,SEEK_SET); //Se busca el puntero a la data de pixeles
-	for(int x=0; x<count_matrix; x++){
-		fwrite(&data[x], sizeof(unsigned char), 1, imagePtr);
-	}
-    cout << "Escribi" << endl;
-    free(data); //Se libera memoria de data
+    for(int x=0 ; x  < nPixels; x++){ 
+        
+        fwrite(&(img.triadas[x]->b), sizeof(unsigned char), 1, imagePtr);
+        fwrite(&(img.triadas[x]->g), sizeof(unsigned char), 1, imagePtr);
+        fwrite(&(img.triadas[x]->r), sizeof(unsigned char), 1, imagePtr);
+        fwrite(&alpha, sizeof(unsigned char), 1, imagePtr);
+    }
+    cout<<"Escribi "<<endl;
+	
 }
 
 void* bin(void * arg){
