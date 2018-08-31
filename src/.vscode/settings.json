@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "types.h": "c",
-        "array": "cpp"
+        "array": "cpp",
+        "initializer_list": "cpp",
+        "utility": "cpp"
     }
 }

@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <cstdlib>
 #include <vector>
-#include "image.h"
 
 using namespace std;
 
@@ -105,29 +104,28 @@ void* read(void* x){
 	//readImage(data.img,data.&img->filePointer);
     FILE *imagePtr = openImage(nombreImagen);
     readImage(imagePtr);
-    buffer_gray.insert((long)x);
 }
 
 
 void* gray(void *arg){
-    int a = buffer_gray.remove();
-    cout<<"Estoy tomando el valor y hago GRAY=> "<< a <<endl;
-    buffer_bin.insert((long)a);
+    Image a = buffer_gray.remove();
+    //  cout<<"Estoy tomando el valor y hago GRAY=> "<< a <<endl;
+    //buffer_bin.insert((long)a);
 }
 
 void* bin(void * arg){
-    int r = buffer_bin.remove();
-    cout<<"Estoy removiendo el valor HAGO BIN=> "<< r <<endl;
-    buffer_nearlyB.insert((long)r);
+    //Image r = buffer_bin.remove();
+    //cout<<"Estoy removiendo el valor HAGO BIN=> "<< r <<endl;
+    //buffer_nearlyB.insert((long)r);
 }
 void* nearly(void * arg){
-    int r = buffer_nearlyB.remove();
-    cout<<"Estoy removiendo el valor HAGO NEARLY=> "<< r <<endl;
-    buffer_write.insert((long)r);
+    //Image r = buffer_nearlyB.remove();
+    //cout<<"Estoy removiendo el valor HAGO NEARLY=> "<< r <<endl;
+    //buffer_write.insert((long)r);
 }
 void* write(void * arg){
-    int r = buffer_write.remove();
-    cout<<"Estoy removiendo el valor HAGO WRITE=> "<< r <<endl;
+    //Image r = buffer_write.remove();
+    //cout<<"Estoy removiendo el valor HAGO WRITE=> "<< r <<endl;
 }
 
 void cpy_img(string nameFile, string nameFileOut){
@@ -135,6 +133,14 @@ void cpy_img(string nameFile, string nameFileOut){
     string cpy_nameFile = nameFile;
     command=command+cpy_nameFile+" ./"+nameFileOut; // cp nameFile
     system(command.c_str());
+}
+
+
+void grayTest(Image *img){
+	for(int aux = 0; aux < img->triadas.size(); aux++){
+        cout << (int)img->triadas[aux]->b << endl;
+    }    
+
 }
 
 /*Función que lee los datos de la imagen desplazandose sobre ella por los bytes. Guarda los datos
@@ -196,7 +202,7 @@ void readImage(FILE *file_pointer){
 	int x;
 	int count_matrix = 0;
 	for(x=0; x<img->height*img->width; x++){ //Se inicia la extracción de datos
-        cout <<(int)data[count_matrix] << endl;
+        
         Triad *triada = new Triad();
         triada->b = data[count_matrix];
 		count_matrix++;
@@ -208,18 +214,14 @@ void readImage(FILE *file_pointer){
 		count_matrix++;
         img->triadas.push_back(triada);
     }
-    
-/*
+    cout << img->triadas.size() << endl;
+    cout << img->tam_img;
 	
-			img->triads[x].b = data[count_matrix];//r
-			count_matrix++;
-			img->triads[x].g = data[count_matrix];//r
-			count_matrix++;
-			img->triads[x].r = data[count_matrix];//r
-			count_matrix++;
-			img->triads[x].a = data[count_matrix];//r
-			count_matrix++;	
-*/	
+    /*for(auto it = img->triadas.begin(); it != img->triadas.end(); it++){ 
+        cout << *it << endl;
+    } */   
+    buffer_gray.insert(*img);
+
     cout << "SALI " <<endl;
 	//Se libera memoria de data
 	//free(data);

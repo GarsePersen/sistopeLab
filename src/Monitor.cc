@@ -1,9 +1,10 @@
 #include <uC++.h>
+#include "image.h"
 _Monitor
     BoundedBuffer {
         uCondition full, empty;
         int front, back, count;
-        int elements[20];
+        Image elements[20];
     
     public:
     
@@ -11,16 +12,16 @@ _Monitor
     _Nomutex 
         int query() {
             return count; }
-        void insert(int elem) {
+        void insert(Image elem) {
             if (count == 20) empty.wait();
             elements[back] = elem;
             back = (back+1)% 20;
             count += 1;
             full.signal();
             }
-        int remove() {
+        Image remove() {
             if(count == 0) full.wait();
-            int elem = elements[front];
+            Image elem = elements[front];
             front = (front+1)%20;
             count -= 1;
             empty.signal();
