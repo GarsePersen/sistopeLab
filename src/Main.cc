@@ -9,13 +9,13 @@
 
 using namespace std;
 
-#define NUM_THREADS 60
+#define NUM_THREADS 10
 void readImage(FILE *file_pointer, string fileName);
 void* read(void* x);
-void* gray(void *arg);
+void* write(void *arg);
 void* bin(void * arg);
 void* nearly(void * arg);
-void* write(void * arg);
+void* gray(void * arg);
 void cpy_img(string nameFile, string nameFileOut);
 BoundedBuffer buffer_gray;
 BoundedBuffer buffer_bin;
@@ -107,24 +107,26 @@ void* read(void* x){
 }
 
 
-void* gray(void *arg){
-    Image img = buffer_gray.remove();
+void* write(void *arg){
+    Image *img = (Image*)buffer_write.remove();
     int count_matrix = 0;
-    FILE *imagePtr = openImage(img.fileName);
-    
-    int nPixels = img.height * img.width;
-    unsigned char alpha = 255;
-	fseek(imagePtr,0,SEEK_SET);	
-	fseek(imagePtr,img.dataPointer,SEEK_SET); //Se busca el puntero a la data de pixeles
-    for(int x=0 ; x  < nPixels; x++){ 
-        
-        fwrite(&(img.triadas[x]->b), sizeof(unsigned char), 1, imagePtr);
-        fwrite(&(img.triadas[x]->g), sizeof(unsigned char), 1, imagePtr);
-        fwrite(&(img.triadas[x]->r), sizeof(unsigned char), 1, imagePtr);
-        fwrite(&alpha, sizeof(unsigned char), 1, imagePtr);
+    cout << "imagen " << img->fileName << endl;
+    FILE *imagePtr = openImage(img->fileName);
+    vector<unsigned char> data;
+    int nPixels = img->height * img->width;
+	for(int x=0 ; x  < nPixels; x++){ 
+        data.push_back(img->triadas[x]->b);//r
+        data.push_back(img->triadas[x]->g);//r 
+        data.push_back(img->triadas[x]->r);//r 
+		data.push_back(255);//r 
     }
-    cout<<"Escribi "<<endl;
-	
+	fseek(imagePtr,0,SEEK_SET);	
+	fseek(imagePtr,img->dataPointer,SEEK_SET); //Se busca el puntero a la data de pixeles
+	for(int x=0; x<count_matrix; x++){
+		fwrite(&data[x], sizeof(unsigned char), 1, imagePtr);
+	}
+    cout << "Escribi" << endl;
+     //Se libera memoria de data
 }
 
 void* bin(void * arg){
@@ -137,9 +139,21 @@ void* nearly(void * arg){
     //cout<<"Estoy removiendo el valor HAGO NEARLY=> "<< r <<endl;
     //buffer_write.insert((long)r);
 }
-void* write(void * arg){
-    //Image r = buffer_write.remove();
-    //cout<<"Estoy removiendo el valor HAGO WRITE=> "<< r <<endl;
+void* gray(void * arg){
+    cout << "Gray! " <<endl;
+    int x;
+    Image *img = (Image*)buffer_gray.remove();
+	for(x = 0; x<img->triadas.size(); x++){
+		int calculo = img->triadas[x]->b*0.11+img->triadas[x]->g*0.59+img->triadas[x]->r*0.3;
+		img->triadas[x]->b = calculo;
+		img->triadas[x]->g = calculo;
+		img->triadas[x]->r = calculo;
+		img->triadas[x]->a = 255;
+	}
+    buffer_write.insert(img);
+		//se retorna la particion
+	return NULL;
+
 }
 
 void cpy_img(string nameFile, string nameFileOut){
@@ -226,7 +240,7 @@ void readImage(FILE *file_pointer, string fileName){
     /*for(auto it = img->triadas.begin(); it != img->triadas.end(); it++){ 
         cout << *it << endl;
     } */   
-    buffer_gray.insert(*img);
+    buffer_gray.insert(img);
 
     cout << "SALI " <<endl;
 	//Se libera memoria de data
