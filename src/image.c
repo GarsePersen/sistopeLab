@@ -225,8 +225,15 @@ Entrada: char *nameFile (nombre del archivo de entrada), char *nameFileOut (Nomb
 Salida: Void
 */
 
-void cpy_img(string nameFile, string nameFileOut){
-    ifstream  src(nameFile, ios::binary);
+void cpy_img(char *nameFile, char *nameFileOut){
+    char *command = (char*)malloc(sizeof(char)*100);
+    strcpy(command,"cp ");
+    char *cpy_nameFile = (char*)malloc(sizeof(char)*100);
+    strcpy(cpy_nameFile,nameFile); //nombre del archivo
+    strcat(command,cpy_nameFile); // cp nameFile
+    strcat(command," ./"); //cp nameFile ./
+    strcat(command,nameFileOut); //cp nameFile ./nameFileOut
+    system(command);
 }
 
 /*Función que abre un archivo, y comprueba de que exista.

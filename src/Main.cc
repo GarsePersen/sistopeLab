@@ -184,22 +184,33 @@ void readImage(FILE *file_pointer){
 	fread(&tam_img,4,1,file_pointer);
 	img->tam_img = tam_img;
 	fseek(file_pointer,30,SEEK_SET);
-	//fread(&img->isCompressed,4,1,file_pointer);
+	fread(&img->isCompressed,4,1,file_pointer);
 	int tablaCol;
 	fseek(file_pointer,46,SEEK_SET);
 	fread(&tablaCol,4,1,file_pointer);
 
 	fseek(file_pointer,img->dataPointer,SEEK_SET); //Se avanza tantos como el data pointer desde el inicio.
-
+    cout << img->dataPointer << endl;
 	unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char *)*tam_img);
 	fread(data,tam_img,1,file_pointer); //Se extrae la data de la imagen.
-
 	int x;
-    img->triads.content(img->height*img->width);
-
-	
 	int count_matrix = 0;
 	for(x=0; x<img->height*img->width; x++){ //Se inicia la extracción de datos
+        cout <<(int)data[count_matrix] << endl;
+        Triad *triada = new Triad();
+        triada->b = data[count_matrix];
+		count_matrix++;
+        triada->g = data[count_matrix];
+		count_matrix++;
+        triada->r = data[count_matrix];
+		count_matrix++;
+        triada->a = data[count_matrix];
+		count_matrix++;
+        img->triadas.push_back(triada);
+    }
+    
+/*
+	
 			img->triads[x].b = data[count_matrix];//r
 			count_matrix++;
 			img->triads[x].g = data[count_matrix];//r
@@ -208,9 +219,8 @@ void readImage(FILE *file_pointer){
 			count_matrix++;
 			img->triads[x].a = data[count_matrix];//r
 			count_matrix++;	
-	}
-	
+*/	
     cout << "SALI " <<endl;
 	//Se libera memoria de data
-	free(data);
+	//free(data);
 }

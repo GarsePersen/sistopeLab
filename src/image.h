@@ -1,4 +1,15 @@
 #include <vector>
+using namespace std;
+
+
+class Triad{
+    public:
+        unsigned char r;
+        unsigned char g;
+        unsigned char b;
+        unsigned char a;
+        unsigned int partition_size;
+};
 
 class Image{
     public:
@@ -15,7 +26,7 @@ class Image{
         int tam_img;
         int bitPerPixel;
         int isCompressed;
-        vector<Triads> triads;
+        vector<Triad*> triadas;
         FILE* filePointer;
         int nThreads;
         int partition_end;
@@ -24,12 +35,3 @@ class Image{
         int numberBlacks;
 };
 
-
-class Triad{
-    public:
-        unsigned char r;
-        unsigned char g;
-        unsigned char b;
-        unsigned char a;
-        unsigned int partition_size;
-};
