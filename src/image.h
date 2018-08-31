@@ -14,6 +14,7 @@ class Triad{
 class Image{
     public:
         int type;
+        string fileName;
         int type2;
         int fileSize;
         int reserved1;

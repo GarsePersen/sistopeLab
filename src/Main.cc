@@ -9,8 +9,8 @@
 
 using namespace std;
 
-#define NUM_THREADS 2
-void readImage(FILE *file_pointer);
+#define NUM_THREADS 10
+void readImage(FILE *file_pointer, string fileName);
 void* read(void* x);
 void* gray(void *arg);
 void* bin(void * arg);
@@ -103,14 +103,33 @@ void* read(void* x){
 	//data.&img->filePointer = openImage(fileNameOut); //Se abre imagen
 	//readImage(data.img,data.&img->filePointer);
     FILE *imagePtr = openImage(nombreImagen);
-    readImage(imagePtr);
+    readImage(imagePtr, fileNameOut);
 }
 
 
 void* gray(void *arg){
-    Image a = buffer_gray.remove();
-    //  cout<<"Estoy tomando el valor y hago GRAY=> "<< a <<endl;
-    //buffer_bin.insert((long)a);
+    Image img = buffer_gray.remove();
+    int count_matrix = 0;
+    FILE *imagePtr = openImage(img.fileName);
+    unsigned char *data = (unsigned char*)malloc(sizeof(unsigned char)*img.tam_img); 
+    int nPixels = img.height * img.width;
+	for(int x=0 ; x  < nPixels; x++){ 
+        data[count_matrix] = img.triadas[x]->b;//r
+        count_matrix++; 
+        data[count_matrix] = img.triadas[x]->g;//r 
+        count_matrix++; 
+        data[count_matrix] = img.triadas[x]->r;//r 
+        count_matrix++; 
+		data[count_matrix] = 255;//r 
+        count_matrix++; 
+    }
+	fseek(imagePtr,0,SEEK_SET);	
+	fseek(imagePtr,img.dataPointer,SEEK_SET); //Se busca el puntero a la data de pixeles
+	for(int x=0; x<count_matrix; x++){
+		fwrite(&data[x], sizeof(unsigned char), 1, imagePtr);
+	}
+    cout << "Escribi" << endl;
+    free(data); //Se libera memoria de data
 }
 
 void* bin(void * arg){
@@ -136,12 +155,6 @@ void cpy_img(string nameFile, string nameFileOut){
 }
 
 
-void grayTest(Image *img){
-	for(int aux = 0; aux < img->triadas.size(); aux++){
-        cout << (int)img->triadas[aux]->b << endl;
-    }    
-
-}
 
 /*Función que lee los datos de la imagen desplazandose sobre ella por los bytes. Guarda los datos
 en la estructura &img->
@@ -153,9 +166,10 @@ en la estructura &img->
 Entrada: Struct Image, FILE *file_pointer (puntero a la imagen con la que se está trabajando)
 Salida: Void
 */
-void readImage(FILE *file_pointer){
+void readImage(FILE *file_pointer, string fileName){
     cout <<"Lei " <<endl;
     Image *img = new Image();
+    img->fileName = fileName;
 	fread(&(img->type), 1, 1, file_pointer); //1
 	fread(&(img->type2), 1, 1, file_pointer); //1
 	/*if((&img->type != 'B' ) && (&img->type != 'M')){ //Se comprueba que el archivo sea del tipo bmp
@@ -196,13 +210,12 @@ void readImage(FILE *file_pointer){
 	fread(&tablaCol,4,1,file_pointer);
 
 	fseek(file_pointer,img->dataPointer,SEEK_SET); //Se avanza tantos como el data pointer desde el inicio.
-    cout << img->dataPointer << endl;
+    img->filePointer = file_pointer;
 	unsigned char *data = (unsigned char *)malloc(sizeof(unsigned char *)*tam_img);
 	fread(data,tam_img,1,file_pointer); //Se extrae la data de la imagen.
 	int x;
 	int count_matrix = 0;
 	for(x=0; x<img->height*img->width; x++){ //Se inicia la extracción de datos
-        
         Triad *triada = new Triad();
         triada->b = data[count_matrix];
 		count_matrix++;
@@ -214,9 +227,7 @@ void readImage(FILE *file_pointer){
 		count_matrix++;
         img->triadas.push_back(triada);
     }
-    cout << img->triadas.size() << endl;
-    cout << img->tam_img;
-	
+
     /*for(auto it = img->triadas.begin(); it != img->triadas.end(); it++){ 
         cout << *it << endl;
     } */   
