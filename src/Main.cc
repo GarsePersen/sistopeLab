@@ -8,8 +8,6 @@
 #include <vector>
 
 using namespace std;
-
-#define NUM_THREADS 60
 void readImage(FILE *file_pointer, string fileName);
 void* read(void* x);
 void* write(void *arg);
@@ -24,35 +22,82 @@ BoundedBuffer buffer_write;
 
 
 
-int main()
+int main(int argc, char **argv)
 {
 
+    int numImgs = -1;
+	int umbral = -1;
+	int umbralNearlyBlack = -1;
+	int flag = 0;
+	int aux;
 
-    pthread_t threads_read[NUM_THREADS];
-    pthread_t threads_bin[NUM_THREADS];
-    pthread_t threads_gray[NUM_THREADS];
-    pthread_t threads_nearlyB[NUM_THREADS];
-    pthread_t threads_write[NUM_THREADS];
+	while ((aux = getopt (argc, argv, "c:u:n:b")) != -1){
+		switch (aux){
+			case 'c':
+				numImgs = atoi(optarg);
+				break;
+			case 'u':
+				umbral = atoi(optarg);
+				break;
+			case 'n':
+				umbralNearlyBlack = atoi(optarg);
+				break;
+			case 'b':
+				flag = 1;
+				break;
+			default:
+				abort();
+		}
+	}
+
+    
+    //Comprobaciones getopt
+    if((numImgs == -1) || (umbral == -1) || (umbralNearlyBlack == -1)){
+        printf("\nNo ha ingresado todas las opciones, revisar leeme\n\n");
+        return -1;
+    }
+    if((umbral < 0 ) || (umbral > 255)){
+        printf("\nValor del umbral incorrecto, debe ser entre 0 y 255, saliendo...\n\n");
+        return -1;
+    }
+    if((umbralNearlyBlack < 0) || (umbralNearlyBlack > 100)){
+        printf("\nValor del umbral para la categoría inválido, debe ser un porcentaje entre 0 y 100\n\n");
+        return -1;
+    }
+    if(numImgs <= 0){
+        printf("\nCantidad de imágenes inválida, debe ser igual o mayor a 1\n\n");
+        return -1;
+    }
+
+    InitialData *initialData = new InitialData();
+    initialData->umbral = umbral;
+    initialData->umbralNearyBlack = umbralNearlyBlack;
+    initialData->flag = flag;
+    pthread_t threads_read[numImgs];
+    pthread_t threads_bin[numImgs];
+    pthread_t threads_gray[numImgs];
+    pthread_t threads_nearlyB[numImgs];
+    pthread_t threads_write[numImgs];
     
     int rc;
     
-    for(int i = 0; i<NUM_THREADS; i++){
+    for(int i = 0; i<numImgs; i++){
         pthread_create(&threads_read[i], NULL, &read, (void*) i+1);
     }
-    for(int i = 0; i<NUM_THREADS; i++){
-        pthread_create(&threads_bin[i], NULL, &gray, (void*) i);
+    for(int i = 0; i<numImgs; i++){
+        pthread_create(&threads_bin[i], NULL, &gray, NULL);
     }
-    for(int i = 0; i<NUM_THREADS; i++){
-        pthread_create(&threads_gray[i], NULL, &bin, (void *)i);
+    for(int i = 0; i<numImgs; i++){
+        pthread_create(&threads_gray[i], NULL, &bin, (void*)initialData);
     }
-    for(int i = 0; i<NUM_THREADS; i++){
-        pthread_create(&threads_nearlyB[i], NULL, &nearly, (void *)i);
+    for(int i = 0; i<numImgs; i++){
+        pthread_create(&threads_nearlyB[i], NULL, &nearly, (void*)initialData);
     }
-    for(int i = 0; i<NUM_THREADS; i++){
-        pthread_create(&threads_write[i], NULL, &write, (void *)i);
+    for(int i = 0; i<numImgs; i++){
+        pthread_create(&threads_write[i], NULL, &write, (void*)initialData);
     }
     for(int x = 0; x<5; x++){
-        for(int i = 0; i<NUM_THREADS; i++){
+        for(int i = 0; i<numImgs; i++){
             if(x ==0){
                 pthread_join(threads_bin[i],NULL);
             }else if(x==1){
@@ -68,7 +113,7 @@ int main()
             }
         }
     }
-    
+    exit(0);
     return 0;
 }
 
@@ -93,7 +138,6 @@ void* read(void* x){
     ss<<"image_"<<nImagen;
     string nombreImagen = ss.str();
     nombreImagen=nombreImagen+".bmp";
-    cout<<"Estoy leyendo "<<nombreImagen<<endl;
     
     //Copiar imagen
     string fileNameOut="binarizado-";
@@ -108,9 +152,9 @@ void* read(void* x){
 
 
 void* write(void *arg){
+    InitialData *initialData = (InitialData*)arg;
     Image *img = (Image*)buffer_write.remove();
     int count_matrix = 0;
-    cout << "imagen " << img->fileName << endl;
     FILE *imagePtr = openImage(img->fileName);
     vector<unsigned char> data;
     int nPixels = img->height * img->width;
@@ -127,22 +171,28 @@ void* write(void *arg){
 	for(int x=0; x<data.size(); x++){
 		fwrite(&data[x], sizeof(unsigned char), 1, imagePtr);
 	}
-    cout << "Escribi" << endl;
+    if(initialData->flag == 1){
+        if(img->nearlyBlack){
+        cout << "| "<<img->fileName <<" | nb? = yes"<<endl;
+        }else{
+            cout << "| "<<img->fileName <<" | nb? = no"<<endl;
+        }
+    }
      //Se libera memoria de data
 }
 
 void* bin(void * arg){
+    InitialData *initialData = (InitialData*)arg;
     Image *img = (Image*)buffer_bin.remove();
     int x;
     int umbral = 50;
 	for(x = 0; x<img->triadas.size(); x++){
-		if(img->triadas[x]->r > umbral){
+		if(img->triadas[x]->r > initialData->umbral){
 			img->triadas[x]->r = 255;
             img->triadas[x]->g = 255;
             img->triadas[x]->b = 255;
 		} else {
 			img->numberBlacks++;
-
 			img->triadas[x]->r = 0;
             img->triadas[x]->g = 0;
             img->triadas[x]->b = 0;
@@ -150,18 +200,39 @@ void* bin(void * arg){
         
 
 	}
-    buffer_write.insert(img);
+    buffer_nearlyB.insert(img);
     //Image r = buffer_bin.remove();
     //cout<<"Estoy removiendo el valor HAGO BIN=> "<< r <<endl;
     //buffer_nearlyB.insert((long)r);
 }
 void* nearly(void * arg){
     //Image r = buffer_nearlyB.remove();
-    //cout<<"Estoy removiendo el valor HAGO NEARLY=> "<< r <<endl;
+    InitialData *initialData = (InitialData*)arg;
+    int x;
+    Image *img = (Image*)buffer_nearlyB.remove();
+    int countBlack = 0;
+	for(x = 0; x<img->triadas.size(); x++){
+		if(img->triadas[x]->b == 0){
+            countBlack++;
+        }
+	}
+    if(countBlack > (img->triadas.size()*(initialData->umbralNearyBlack))/100){
+        img->nearlyBlack = true;
+        
+    }else{
+        img->nearlyBlack = false;
+       
+    }
+    buffer_write.insert(img);
+		//se retorna la particion
+	return NULL;
+
+
+
+
     //buffer_write.insert((long)r);
 }
 void* gray(void * arg){
-    cout << "Gray! " <<endl;
     int x;
     Image *img = (Image*)buffer_gray.remove();
 	for(x = 0; x<img->triadas.size(); x++){
@@ -197,8 +268,8 @@ Entrada: Struct Image, FILE *file_pointer (puntero a la imagen con la que se est
 Salida: Void
 */
 void readImage(FILE *file_pointer, string fileName){
-    cout <<"Lei " <<endl;
     Image *img = new Image();
+    img->umbralNearyBlack = 50;
     img->fileName = fileName;
 	fread(&(img->type), 1, 1, file_pointer); //1
 	fread(&(img->type2), 1, 1, file_pointer); //1
@@ -245,7 +316,6 @@ void readImage(FILE *file_pointer, string fileName){
 	fread(data,tam_img,1,file_pointer); //Se extrae la data de la imagen.
 	int x;
 	int count_matrix = 0;
-    cout << img->bitPerPixel << endl;
 	for(x=0; x<img->height*img->width; x++){ //Se inicia la extracción de datos
         Triad *triada = new Triad();
         triada->b = data[count_matrix];

@@ -2,6 +2,14 @@
 using namespace std;
 
 
+class InitialData{
+    public:
+    int umbral;
+    int umbralNearyBlack;
+    int flag;
+};
+
+
 class Triad{
     public:
         unsigned char r;
@@ -13,6 +21,8 @@ class Triad{
 
 class Image{
     public:
+        int umbralNearyBlack;
+        bool nearlyBlack;
         int type;
         string fileName;
         int type2;
