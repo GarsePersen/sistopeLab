@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define NUM_THREADS 10
+#define NUM_THREADS 60
 void readImage(FILE *file_pointer, string fileName);
 void* read(void* x);
 void* write(void *arg);
@@ -118,11 +118,13 @@ void* write(void *arg){
         data.push_back(img->triadas[x]->b);//r
         data.push_back(img->triadas[x]->g);//r 
         data.push_back(img->triadas[x]->r);//r 
-		data.push_back(255);//r 
+        if(img->bitPerPixel == 32){
+		    data.push_back(255);//r 
+        }
     }
 	fseek(imagePtr,0,SEEK_SET);	
 	fseek(imagePtr,img->dataPointer,SEEK_SET); //Se busca el puntero a la data de pixeles
-	for(int x=0; x<count_matrix; x++){
+	for(int x=0; x<data.size(); x++){
 		fwrite(&data[x], sizeof(unsigned char), 1, imagePtr);
 	}
     cout << "Escribi" << endl;
@@ -130,6 +132,25 @@ void* write(void *arg){
 }
 
 void* bin(void * arg){
+    Image *img = (Image*)buffer_bin.remove();
+    int x;
+    int umbral = 50;
+	for(x = 0; x<img->triadas.size(); x++){
+		if(img->triadas[x]->r > umbral){
+			img->triadas[x]->r = 255;
+            img->triadas[x]->g = 255;
+            img->triadas[x]->b = 255;
+		} else {
+			img->numberBlacks++;
+
+			img->triadas[x]->r = 0;
+            img->triadas[x]->g = 0;
+            img->triadas[x]->b = 0;
+		}
+        
+
+	}
+    buffer_write.insert(img);
     //Image r = buffer_bin.remove();
     //cout<<"Estoy removiendo el valor HAGO BIN=> "<< r <<endl;
     //buffer_nearlyB.insert((long)r);
@@ -150,7 +171,7 @@ void* gray(void * arg){
 		img->triadas[x]->r = calculo;
 		img->triadas[x]->a = 255;
 	}
-    buffer_write.insert(img);
+    buffer_bin.insert(img);
 		//se retorna la particion
 	return NULL;
 
@@ -224,6 +245,7 @@ void readImage(FILE *file_pointer, string fileName){
 	fread(data,tam_img,1,file_pointer); //Se extrae la data de la imagen.
 	int x;
 	int count_matrix = 0;
+    cout << img->bitPerPixel << endl;
 	for(x=0; x<img->height*img->width; x++){ //Se inicia la extracción de datos
         Triad *triada = new Triad();
         triada->b = data[count_matrix];
@@ -232,8 +254,10 @@ void readImage(FILE *file_pointer, string fileName){
 		count_matrix++;
         triada->r = data[count_matrix];
 		count_matrix++;
-        triada->a = data[count_matrix];
-		count_matrix++;
+        if(img->bitPerPixel == 32){
+            triada->a = data[count_matrix];
+            count_matrix++;
+        }
         img->triadas.push_back(triada);
     }
 
@@ -242,7 +266,6 @@ void readImage(FILE *file_pointer, string fileName){
     } */   
     buffer_gray.insert(img);
 
-    cout << "SALI " <<endl;
 	//Se libera memoria de data
 	//free(data);
 }

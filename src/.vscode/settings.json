@@ -3,6 +3,9 @@
         "types.h": "c",
         "array": "cpp",
         "initializer_list": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "complex": "cpp",
+        "deque": "cpp",
+        "vector": "cpp"
     }
 }
